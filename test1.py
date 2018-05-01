@@ -1,9 +1,9 @@
 import numpy as np
 from scipy import signal as sg
-dim = 6
+dim = 56
 dim_p=dim + 2
-dep = 4
-ker = 32
+dep = 16
+ker = 64
 sq_ker = 16
 pool_en = 0
 av_pool_en = 0
@@ -27,6 +27,15 @@ for z in range(0,dim):
             for rep in range(0,ker,4):
                 f_in.write(str(lis)[1:-1]+'\n')
                 f_in_b.write(bytearray(lis))
+
+f_in_c = open("input_layer_c.txt","w")
+f_in_c_b = open("input_layer_c.bin","wb")
+for d in range(0,dep):
+    for z in range(0,dim):
+        for y in range(0,dim):
+            lis = in_ori[z,y,d].flatten().tolist()
+            f_in_c.write(str(lis)[1:-1]+'\n')
+            f_in_c_b.write(bytearray(lis))
 ########################        expand kernels 
 ker_l_1 = np.arange(ker*dep, dtype='uint8').reshape((ker,dep))
 # print(ker_l_1);print("________")
@@ -41,17 +50,17 @@ ker_l_3 = np.arange(ker*dep*9, dtype='uint8').reshape((ker,dep,9))
 # print(ker_l_3[0,0,:]);print("________")
 f_k_3 = open("ker_3x3.txt","w")
 f_k_3_b = open("ker_3x3.bin","wb")
-for m in range(0,dim): # repet 3x3 kernel
-    for z in range(0,dep):
-        lis = ker_l_3[:,z,:]
-        for x in range(0,ker,8):
-            for a in range(0,8):
-                eig = lis[x+a,0:8]
-                f_k_3_b.write(bytearray(eig))
-                f_k_3.write(str(eig)[1:-1]+'\n')
-            nin = lis[x:x+8,-1].flatten()[::-1] #reversed
-            f_k_3_b.write(bytearray(nin))
-            f_k_3.write(str(nin)[1:-1]+'\n')
+# for m in range(0,dim): # repet 3x3 kernel # removed repeating
+for z in range(0,dep):
+    lis = ker_l_3[:,z,:]
+    for x in range(0,ker,8):
+        for a in range(0,8):
+            eig = lis[x+a,0:8]
+            f_k_3_b.write(bytearray(eig))
+            f_k_3.write(str(eig)[1:-1]+'\n')
+        nin = lis[x:x+8,-1].flatten()[::-1] #reversed
+        f_k_3_b.write(bytearray(nin))
+        f_k_3.write(str(nin)[1:-1]+'\n')
 ########################        exapnd bias
 bis_1 = np.arange(ker,dtype='uint8')
 bis_3 = np.arange(ker,dtype='uint8')
@@ -241,6 +250,12 @@ for r in range(0,dim_sq):
     for d in range(0,sq_ker):
         lis = sq_out[d,r,:]
         f_sq_out_1_b.write(bytearray(lis))
+        f_sq_out_1.write(str(lis)[1:-1]+'\n')
+
+f_sq_out_1_c = open("sq_out_c.txt","w")
+for r in range(0,sq_ker):
+    for d in range(0,dim_sq):
+        lis = sq_out[r,d,:]
         f_sq_out_1.write(str(lis)[1:-1]+'\n')
 
 ########################     avg pool

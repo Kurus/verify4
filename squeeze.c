@@ -179,7 +179,7 @@ float* getwei(int sz, char* name){
 // read input image
 float* getimg(int sz,int dep){
     float* wei = calloc(sz*sz*dep, sizeof(float));
-    FILE *ff = fopen("input.txt", "r");
+    FILE *ff = fopen("input_layer_c.txt", "r");
     int i;
     for (int i = 0; i < sz*sz*3; ++i)
     {
@@ -282,10 +282,10 @@ int main(){
 // return 0;
 int i;
 
-int in_sz=227,in_dep=3;
-int k_sz=3,k_d=in_dep,k_n=64;
-int o_dep=k_n,o_sz=113;
-int str = 2,same=0;
+int in_sz=6,in_dep=4;
+int k_sz=3,k_d=in_dep,k_n=32;
+int o_dep=k_n,o_sz=6;
+int str = 1,same=0;
 float* img = getimg(in_sz, in_dep);
 // /////////////conv 1/////////////////////////////
 // float* ker = getwei(k_n*k_sz*k_sz*k_d,"wei/conv1_ker");
