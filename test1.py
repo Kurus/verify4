@@ -42,9 +42,13 @@ ker_l_1 = np.arange(ker*dep, dtype='uint8').reshape((ker,dep))
 f_k_1 = open("ker_1x1.txt","w")
 f_k_1_b = open("ker_1x1.bin","wb")
 for z in range(0,dep):
-    lis = ker_l_1[:,z]
-    f_k_1_b.write(bytearray(lis))
-    f_k_1.write(str(lis)[1:-1]+'\n')
+    for x in range(0,ker,8):
+        lis = ker_l_1[x+4:x+8,z]
+        f_k_1_b.write(bytearray(lis))
+        f_k_1.write(str(lis)[1:-1]+'\n')
+        lis = ker_l_1[x:x+4,z]
+        f_k_1_b.write(bytearray(lis))
+        f_k_1.write(str(lis)[1:-1]+'\n')
 
 ker_l_3 = np.arange(ker*dep*9, dtype='uint8').reshape((ker,dep,9))
 # print(ker_l_3[0,0,:]);print("________")
@@ -222,8 +226,11 @@ sq_bis_1 = np.arange(sq_ker,dtype='uint8')
 f_sq_bis = open("sq_bias.txt","w")
 f_sq_bis_b = open("sq_bias.bin","wb")
 
-f_sq_bis.write(str(sq_bis_1)[1:-1]+'\n')
-f_sq_bis_b.write(bytearray(sq_bis_1))
+for x in range(0,sq_ker,8):
+    lis = sq_bis_1[x:x+8]
+    lis = lis[::-1] #reverse
+    f_sq_bis.write(str(lis)[1:-1]+'\n')
+    f_sq_bis_b.write(bytearray(lis))
 
 ######################    squ convoluve
 sq_out = np.zeros((sq_ker,dep,dim_sq,dim_sq), dtype='uint8')
