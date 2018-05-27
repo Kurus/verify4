@@ -99,7 +99,8 @@ for i in range(0,ker,4):
     b_bis_b.write(bytearray(bis_3[i:i+4]))
     b_bis_b.write(bytearray(bis_1[i:i+4]))
 bis_1 = b2f(bis_1) ######### convert to float
-# print(bis_1)
+print(bis_1)
+print(sum(bis_1))
 bis_3 = b2f(bis_3)
 #######################        expand convolution
 out_1 = np.zeros(ker*dep*dim*dim, dtype='float32').reshape((ker,dep,dim,dim))
