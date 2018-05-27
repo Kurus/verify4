@@ -6,7 +6,7 @@ dep = 4
 ker = 32
 sq_ker = 16
 pool_en = 0
-av_pool_en = 1
+av_pool_en = 0
 random = 0 #TODO
 sq_rep = 0 # repete squze kernl for last layer
 
@@ -99,6 +99,7 @@ for i in range(0,ker,4):
     b_bis_b.write(bytearray(bis_3[i:i+4]))
     b_bis_b.write(bytearray(bis_1[i:i+4]))
 bis_1 = b2f(bis_1) ######### convert to float
+# print(bis_1)
 bis_3 = b2f(bis_3)
 #######################        expand convolution
 out_1 = np.zeros(ker*dep*dim*dim, dtype='float32').reshape((ker,dep,dim,dim))
@@ -244,6 +245,7 @@ for r in range(0,rep_no):
     
 sq_ker_l = b2f(sq_ker_l) #########converting to float
 #######################    squ bias
+# sq_bis_1 = np.full(sq_ker,0x00,dtype='uint8')
 sq_bis_1 = np.random.randint(low = 0, high = 255, size = (sq_ker),dtype='uint8')
 # print(sq_bis_1)
 f_sq_bis = open("sq_bias.txt","w")
@@ -259,8 +261,8 @@ for k in range(0,sq_ker):
         res = sg.convolve(sq_in[l,:,:],[[sq_ker_l[k,l]]] , "valid").astype(float)
         sq_out[k,l,:,:]=res
 
-# print(sq_in[2,:,:])
-# print(sq_ker_l[0,2])
+# print(sq_in[0:3,:,:])
+# print(sq_ker_l[0,0])
 # print(sq_out[0,2,:,:])
 
 squ_out_tmp = np.zeros((sq_ker,dim_sq,dim_sq), dtype='float32')
@@ -273,10 +275,12 @@ for a in range(0,sq_ker):
             squ_out_tmp[a,b,c]=ans
 # sq_out = np.sum(sq_out,1,dtype='float32') # convvert to 12 bit
 sq_out = squ_out_tmp
+print(sq_out[:,0,0])
+print(sq_bis_1)
 for i in range(0,sq_ker):
     sq_out[i,:,:] = sq_out[i,:,:] + sq_bis_1[i]
 sq_out[sq_out < 0] = 0 # no need for positive
-
+print(sq_out[:,0,0])
 
 # sq_out = np.arange(sq_ker*dim_sq*dim_sq, dtype='uint8').reshape((sq_ker,dim_sq,dim_sq)) # test ouptu
 # print(sq_out[0,:,:]);print('______')
