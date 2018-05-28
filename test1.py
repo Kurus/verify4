@@ -1,6 +1,6 @@
 import numpy as np
 from scipy import signal as sg
-dim = 6
+dim = 13
 dim_p=dim + 2
 dep = 4
 ker = 32
@@ -20,8 +20,9 @@ def q(x):
 q8 = np.vectorize(q)
 def qq(x):
     bits = cast(pointer(c_float(x)), POINTER(c_int32)).contents.value
-    # bits = bits + 0x100000;
-    bits=(bits>>17)<<17
+    # bits = bits + 0x010000;
+    # bits=(bits>>17)<<17
+    bits=bits&0xfffe0000
     return cast(pointer(c_int32(bits)), POINTER(c_float)).contents.value
 q12 = np.vectorize(qq)
 
@@ -61,9 +62,9 @@ for z in range(0,dim):
                 f_in_b.write(bytearray(lis))
 ########################        expand kernels 
 ker_l_1 = np.zeros(ker*dep, dtype='uint8').reshape((ker,dep))
-# print(ker_l_1);print("________")
 f_k_1 = open("ker_1x1.txt","w")
 f_k_1_b = open("ker_1x1.bin","wb")
+# print(ker_l_1);print("________")
 for z in range(0,dep):
     lis = ker_l_1[:,z]
     f_k_1_b.write(bytearray(lis))
@@ -85,8 +86,8 @@ for m in range(0,dim): # repet 3x3 kernel
             f_k_3_b.write(bytearray(nin))
             f_k_3.write(str(nin)[1:-1]+'\n')
 ########################        exapnd bias
-# bis_1 = np.full(ker,0x3d,dtype='uint8') #one
-bis_1 = np.random.randint(low = 60, high = 70, size = (ker),dtype='uint8')
+bis_1 = np.full(ker,0x3d,dtype='uint8') #one
+# bis_1 = np.random.randint(low = 60, high = 100, size = (ker),dtype='uint8')
 # bis_1 = np.full(ker,0x00,dtype='uint8')
 # bis_3 = np.full(ker,0x3c,dtype='uint8')
 bis_3 = np.full(ker,0x00,dtype='uint8')
@@ -246,8 +247,8 @@ for r in range(0,rep_no):
     
 sq_ker_l = b2f(sq_ker_l) #########converting to float
 #######################    squ bias
-# sq_bis_1 = np.full(sq_ker,0x00,dtype='uint8')
-sq_bis_1 = np.random.randint(low = 0, high = 255, size = (sq_ker),dtype='uint8')
+sq_bis_1 = np.full(sq_ker,0x00,dtype='uint8')
+# sq_bis_1 = np.random.randint(low = 0, high = 255, size = (sq_ker),dtype='uint8')
 # print(sq_bis_1)
 f_sq_bis = open("sq_bias.txt","w")
 f_sq_bis_b = open("sq_bias.bin","wb")
@@ -270,11 +271,13 @@ squ_out_tmp = np.zeros((sq_ker,dim_sq,dim_sq), dtype='float32')
 for a in range(0,sq_ker):
     for b in range(0,dim_sq):
         for c in range(0,dim_sq):
-            ans = 0
+            ans = 0.0
             for i in range(0,dep):
+                # print('%f + %f '%(ans,sq_out[a,i,b,c]))
                 ans = q12( ans + q12(sq_out[a,i,b,c]))
             squ_out_tmp[a,b,c]=ans
-# sq_out = np.sum(sq_out,1,dtype='float32') # convvert to 12 bit
+sq_out2 = np.sum(sq_out,1,dtype='float32') # convvert to 12 bit
+print(sq_out2[:,0,0])
 sq_out = squ_out_tmp
 print(sq_out[:,0,0])
 print(sq_bis_1)
