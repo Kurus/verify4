@@ -1,6 +1,6 @@
 import numpy as np
 from scipy import signal as sg
-dim = 13
+dim = 3
 dim_p=dim + 2
 dep = 4
 ker = 32
@@ -43,6 +43,14 @@ def flt_byt(x):
     bits = ((x&0x80000000)>>24) | e<<2 | (x&0x00600000)>>21
     return np.uint8(bits)
 f2b = np.vectorize(flt_byt)
+
+def add(x):
+    while len(x)!=1:
+        t=[]
+        for a in range(0,len(x),2):
+            t.append(qq(x[a])+qq(x[a+1]))
+        x=t
+    return x[0]
 #######################         Input image
 in_l = np.zeros(dim_p*dim_p*dep, dtype='uint8').reshape((dim_p,dim_p,dep))
 if random == 0:
@@ -271,13 +279,7 @@ squ_out_tmp = np.zeros((sq_ker,dim_sq,dim_sq), dtype='float32')
 for a in range(0,sq_ker):
     for b in range(0,dim_sq):
         for c in range(0,dim_sq):
-            ans = 0.0
-            for i in range(0,dep):
-                # print('%f + %f '%(ans,sq_out[a,i,b,c]))
-                ans = q12( ans + q12(sq_out[a,i,b,c]))
-            squ_out_tmp[a,b,c]=ans
-sq_out2 = np.sum(sq_out,1,dtype='float32') # convvert to 12 bit
-print(sq_out2[:,0,0])
+            squ_out_tmp[a,b,c]=add(sq_out[a,:,b,c])
 sq_out = squ_out_tmp
 print(sq_out[:,0,0])
 print(sq_bis_1)
