@@ -54,7 +54,8 @@ def add(x):
 #######################         Input image
 in_l = np.zeros(dim_p*dim_p*dep, dtype='uint8').reshape((dim_p,dim_p,dep))
 if random == 0:
-    in_ori = np.arange(dim*dim*dep, dtype='uint8').reshape((dim,dim,dep))
+    # in_ori = np.arange(dim*dim*dep, dtype='uint8').reshape((dim,dim,dep))
+    in_ori = np.random.randint(low = 60, high = 100, size = (dim*dim*dep),dtype='uint8').reshape((dim,dim,dep))
 else:
     in_ori = np.random.randint(low = 0, high = 255, size = (dim,dim,dep), dtype='uint8')
 in_l[1:-1,1:-1,:] = in_ori
@@ -69,7 +70,8 @@ for z in range(0,dim):
                 f_in.write(str(lis)[1:-1]+'\n')
                 f_in_b.write(bytearray(lis))
 ########################        expand kernels 
-ker_l_1 = np.zeros(ker*dep, dtype='uint8').reshape((ker,dep))
+# ker_l_1 = np.zeros(ker*dep, dtype='uint8').reshape((ker,dep))
+ker_l_1 = np.random.randint(low = 60, high = 100, size = (ker*dep),dtype='uint8').reshape((ker,dep))
 f_k_1 = open("ker_1x1.txt","w")
 f_k_1_b = open("ker_1x1.bin","wb")
 # print(ker_l_1);print("________")
@@ -93,9 +95,11 @@ for m in range(0,dim): # repet 3x3 kernel
             nin = lis[x:x+8,-1].flatten()[::-1] #reversed
             f_k_3_b.write(bytearray(nin))
             f_k_3.write(str(nin)[1:-1]+'\n')
+ker_l_1 = b2f(ker_l_1)
+ker_l_3 = b2f(ker_l_3)
 ########################        exapnd bias
-bis_1 = np.full(ker,0x3d,dtype='uint8') #one
-# bis_1 = np.random.randint(low = 60, high = 100, size = (ker),dtype='uint8')
+# bis_1 = np.full(ker,0x3d,dtype='uint8') #one
+bis_1 = np.random.randint(low = 60, high = 100, size = (ker),dtype='uint8')
 # bis_1 = np.full(ker,0x00,dtype='uint8')
 # bis_3 = np.full(ker,0x3c,dtype='uint8')
 bis_3 = np.full(ker,0x00,dtype='uint8')
@@ -108,8 +112,8 @@ for i in range(0,ker,4):
     b_bis_b.write(bytearray(bis_3[i:i+4]))
     b_bis_b.write(bytearray(bis_1[i:i+4]))
 bis_1 = b2f(bis_1) ######### convert to float
-print(bis_1)
-print(sum(bis_1))
+# print(bis_1)
+# print(sum(bis_1))
 bis_3 = b2f(bis_3)
 #######################        expand convolution
 out_1 = np.zeros(ker*dep*dim*dim, dtype='float32').reshape((ker,dep,dim,dim))
@@ -148,8 +152,19 @@ for r in range(0,dim):
             f_out_3.write(str(lis)[1:-1]+'\n')
 
 ############################ add bias and relu
-
+out_1_tmp = np.zeros(ker*dim*dim, dtype='float32').reshape((ker,dim,dim))
+for a in range(0,ker):
+    for b in range(0,dim):
+        for c in range(0,dim):
+            ans = 0.0
+            for i in range(dep):
+                ans = qq(ans + qq(out_1[a,i,b,c]))
+            out_1_tmp[a,b,c]=ans
+print(out_1_tmp[0,:,:])
+# out_1 = out_1_tmp
 out_1 = np.sum(out_1,1,dtype='float32') ########change to 12 bit
+print(out_1[0,:,:])
+exit()
 for i in range(0,ker):
     out_1[i,:,:] = out_1[i,:,:] + bis_1[i]
 out_1[out_1 < 0] = 0.0 # no need for positive
@@ -281,12 +296,12 @@ for a in range(0,sq_ker):
         for c in range(0,dim_sq):
             squ_out_tmp[a,b,c]=add(sq_out[a,:,b,c])
 sq_out = squ_out_tmp
-print(sq_out[:,0,0])
-print(sq_bis_1)
+# print(sq_out[:,0,0])
+# print(sq_bis_1)
 for i in range(0,sq_ker):
     sq_out[i,:,:] = sq_out[i,:,:] + sq_bis_1[i]
 sq_out[sq_out < 0] = 0 # no need for positive
-print(sq_out[:,0,0])
+# print(sq_out[:,0,0])
 
 # sq_out = np.arange(sq_ker*dim_sq*dim_sq, dtype='uint8').reshape((sq_ker,dim_sq,dim_sq)) # test ouptu
 # print(sq_out[0,:,:]);print('______')
