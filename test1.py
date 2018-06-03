@@ -175,7 +175,7 @@ out_1 = out_1_tmp
 # out_1 = np.sum(out_1,1,dtype='float32') ########change to 12 bit
 # print(out_1[0,:,:])
 for i in range(0,ker):
-    out_1[i,:,:] = qq(out_1[i,:,:]) + qq(bis_1[i])
+    out_1[i,:,:] = q12(q12(out_1[i,:,:]) + q12(bis_1[i]))
 out_1[out_1 < 0] = 0.0 # no need for positive
 exp_out_1 = open("exp_1.txt","w")
 exp_out_1_b = open("exp_1.bin","wb")
@@ -188,7 +188,7 @@ for x in range(0,dim):
 
 out_3 = np.sum(out_3,1,dtype='float32') ############# change
 for i in range(0,ker):
-    out_3[i,:,:] = qq(out_3[i,:,:]) + qq(bis_3[i])
+    out_3[i,:,:] = q12(q12(out_3[i,:,:]) + q12(bis_3[i]))
 out_3[out_3 < 0] = 0.0
 exp_out_3 = open("exp_3.txt","w")
 exp_out_3_b = open("exp_3.bin","wb")
