@@ -27,25 +27,35 @@ def qq(x):
 q12 = np.vectorize(qq)
 
 def byt_flt(x):
+    ee = ((x&0x7c)>>2)+112
     if((x&0x7c) == 0):
-        return 0.0
-    bits = ((x&0x80)<<24) | (((x&0x7c)>>2)+112)<<23 | (x&0x3)<<21
-    return np.float32(cast(pointer(c_int32(bits)), POINTER(c_float)).contents.value)
+        if x&0x3==0:
+            ee=0
+        else:
+            ee=112
+    bits = ((x&0x80)<<24) | (ee)<<23 | (x&0x3)<<21
+    # print(hex(bits))
+    return cast(pointer(c_int32(bits)), POINTER(c_float)).contents.value
 b2f = np.vectorize(byt_flt)
 
 def flt_byt(x):
     x = cast(pointer(c_float(x)), POINTER(c_int32)).contents.value
+    # print(hex(x))
     e = ((x&0x7F800000)>>23) - 112
+    man = x&0x00600000
+    sgn = x&0x80000000
     if e<0:
         e = 0
+        man = 0
+        sgn = 0
     if e>31:
         e = 31
-    bits = ((x&0x80000000)>>24) | e<<2 | (x&0x00600000)>>21
+    bits = sgn>>24 | e<<2 | man>>21
     return np.uint8(bits)
 f2b = np.vectorize(flt_byt)
 
 def add(x):
-    while len(x)!=1:
+    while len(x)!=1:#hiearchical addition
         t=[]
         for a in range(0,len(x),2):
             t.append(qq(x[a])+qq(x[a+1]))
@@ -70,8 +80,8 @@ for z in range(0,dim):
                 f_in.write(str(lis)[1:-1]+'\n')
                 f_in_b.write(bytearray(lis))
 ########################        expand kernels 
-# ker_l_1 = np.zeros(ker*dep, dtype='uint8').reshape((ker,dep))
-ker_l_1 = np.random.randint(low = 60, high = 100, size = (ker*dep),dtype='uint8').reshape((ker,dep))
+ker_l_1 = np.zeros(ker*dep, dtype='uint8').reshape((ker,dep))
+# ker_l_1 = np.random.randint(low = 60, high = 100, size = (ker*dep),dtype='uint8').reshape((ker,dep))
 f_k_1 = open("ker_1x1.txt","w")
 f_k_1_b = open("ker_1x1.bin","wb")
 # print(ker_l_1);print("________")
@@ -153,20 +163,19 @@ for r in range(0,dim):
 
 ############################ add bias and relu
 out_1_tmp = np.zeros(ker*dim*dim, dtype='float32').reshape((ker,dim,dim))
-for a in range(0,ker):
+for a in range(0,ker):# for exp kernel addition is sequential
     for b in range(0,dim):
         for c in range(0,dim):
             ans = 0.0
             for i in range(dep):
                 ans = qq(ans + qq(out_1[a,i,b,c]))
             out_1_tmp[a,b,c]=ans
-print(out_1_tmp[0,:,:])
-# out_1 = out_1_tmp
-out_1 = np.sum(out_1,1,dtype='float32') ########change to 12 bit
-print(out_1[0,:,:])
-exit()
+# print(out_1_tmp[0,:,:])
+out_1 = out_1_tmp
+# out_1 = np.sum(out_1,1,dtype='float32') ########change to 12 bit
+# print(out_1[0,:,:])
 for i in range(0,ker):
-    out_1[i,:,:] = out_1[i,:,:] + bis_1[i]
+    out_1[i,:,:] = qq(out_1[i,:,:]) + qq(bis_1[i])
 out_1[out_1 < 0] = 0.0 # no need for positive
 exp_out_1 = open("exp_1.txt","w")
 exp_out_1_b = open("exp_1.bin","wb")
@@ -179,7 +188,7 @@ for x in range(0,dim):
 
 out_3 = np.sum(out_3,1,dtype='float32') ############# change
 for i in range(0,ker):
-    out_3[i,:,:] = out_3[i,:,:] + bis_3[i]
+    out_3[i,:,:] = qq(out_3[i,:,:]) + qq(bis_3[i])
 out_3[out_3 < 0] = 0.0
 exp_out_3 = open("exp_3.txt","w")
 exp_out_3_b = open("exp_3.bin","wb")
@@ -244,7 +253,8 @@ else:
 
 ########################   squ kernel
 if random == 0:
-    sq_ker_l = np.full(sq_ker*dep,0x3c,dtype='uint8').reshape((sq_ker,dep))
+    #sq_ker_l = np.full(sq_ker*dep,65,dtype='uint8').reshape((sq_ker,dep))
+    sq_ker_l = np.random.randint(low=60, high=100, size = (sq_ker*dep),dtype='uint8').reshape((sq_ker,dep))
     # sq_ker_l = np.zeros(sq_ker*dep, dtype='uint8').reshape((sq_ker,dep))
 else:
     sq_ker_l = np.random.randint(low = 0, high = 255, size = (sq_ker,dep), dtype='uint8')
