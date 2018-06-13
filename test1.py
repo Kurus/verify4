@@ -26,6 +26,24 @@ def qq(x):
     return cast(pointer(c_int32(bits)), POINTER(c_float)).contents.value
 q12 = np.vectorize(qq)
 
+def f2d(a):
+    return float(a)
+
+def d2b(x):
+    x = cast(pointer(c_double(x)), POINTER(c_int64)).contents.value
+    print(hex(x))
+    e = ((x&0x7FF0000000000000)>>52) - 1008
+    man = x&0x000C000000000000
+    sgn = x&0x8000000000000000
+    if e<0:
+        e = 0
+        man = 0
+        sgn = 0
+    if e>31:
+        e = 31
+    bits = sgn>>56 | e<<2 | man>> 50# 64-8,2,52-2
+    return np.uint8(bits)
+
 def byt_flt(x):
     ee = ((x&0x7c)>>2)+112
     if((x&0x7c) == 0):
@@ -254,8 +272,8 @@ else:
 ########################   squ kernel
 if random == 0:
     #sq_ker_l = np.full(sq_ker*dep,65,dtype='uint8').reshape((sq_ker,dep))
-    sq_ker_l = np.random.randint(low=60, high=100, size = (sq_ker*dep),dtype='uint8').reshape((sq_ker,dep))
-    # sq_ker_l = np.zeros(sq_ker*dep, dtype='uint8').reshape((sq_ker,dep))
+    # sq_ker_l = np.random.randint(low=60, high=100, size = (sq_ker*dep),dtype='uint8').reshape((sq_ker,dep))
+    sq_ker_l = np.zeros(sq_ker*dep, dtype='uint8').reshape((sq_ker,dep))
 else:
     sq_ker_l = np.random.randint(low = 0, high = 255, size = (sq_ker,dep), dtype='uint8')
 
@@ -280,7 +298,7 @@ for r in range(0,rep_no):
     
 sq_ker_l = b2f(sq_ker_l) #########converting to float
 #######################    squ bias
-sq_bis_1 = np.full(sq_ker,0x00,dtype='uint8')
+sq_bis_1 = np.full(sq_ker,0x60,dtype='uint8')
 # sq_bis_1 = np.random.randint(low = 0, high = 255, size = (sq_ker),dtype='uint8')
 # print(sq_bis_1)
 f_sq_bis = open("sq_bias.txt","w")
