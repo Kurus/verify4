@@ -31,7 +31,7 @@ def f2d(a):
 
 def d2b(x):
     x = cast(pointer(c_double(x)), POINTER(c_int64)).contents.value
-    print(hex(x))
+    # print(hex(x))
     e = ((x&0x7FF0000000000000)>>52) - 1008
     man = x&0x000C000000000000
     sgn = x&0x8000000000000000
@@ -43,7 +43,7 @@ def d2b(x):
         e = 31
     bits = sgn>>56 | e<<2 | man>> 50# 64-8,2,52-2
     return np.uint8(bits)
-
+d2bb = np.vectorize(d2b)
 def byt_flt(x):
     ee = ((x&0x7c)>>2)+112
     if((x&0x7c) == 0):
@@ -337,7 +337,7 @@ f_sq_out_1 = open("sq_out.txt","w")
 f_sq_out_1_b = open("sq_out.bin","wb")
 for r in range(0,dim_sq):
     for d in range(0,sq_ker):
-        lis = d2b(sq_out[d,r,:])
+        lis = d2bb(sq_out[d,r,:])
         f_sq_out_1_b.write(bytearray(lis))
         f_sq_out_1.write(str(lis)[1:-1]+'\n')
 
