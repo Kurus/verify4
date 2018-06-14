@@ -20,6 +20,12 @@ def q(x):
 q8 = np.vectorize(q)
 def qq(x):
     bits = cast(pointer(c_float(x)), POINTER(c_int32)).contents.value
+    e = ((x&0x7F800000)>>23) - 112
+    if e<0:
+        x=0
+    if e>31:
+        x = x & 0x807fffff
+        x = x | ((31+112)<<23)
     # bits = bits + 0x010000;
     # bits=(bits>>17)<<17
     bits=bits&0xfffe0000
@@ -320,7 +326,8 @@ print(sq_in[0,:,:])
 print("sqeeze kernel")
 print(sq_ker_l[0,0])
 print("sqeeze out before addtition, first layer, first kernel")
-print(sq_out[0,0,:,:])
+print(sq_out[0,:,0,0])
+print(sum(sq_out[0,:,0,0]))
 
 squ_out_tmp = np.zeros((sq_ker,dim_sq,dim_sq), dtype='float32')
 for a in range(0,sq_ker):
