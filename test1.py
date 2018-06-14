@@ -133,14 +133,14 @@ bis_1 = np.full(ker,0x3c,dtype='uint8') #one
 bis_3 = np.full(ker,0x00,dtype='uint8')
 b_bis = open("bias.txt","w")
 b_bis_b = open("bias.bin","wb")
-# print(bis_1)
+print("exp bias");print(bis_1)
 for i in range(0,ker,4):
     b_bis.write(str(bis_3[i:i+4])[1:-1]+'\n')
     b_bis.write(str(bis_1[i:i+4])[1:-1]+'\n')
     b_bis_b.write(bytearray(bis_3[i:i+4]))
     b_bis_b.write(bytearray(bis_1[i:i+4]))
 bis_1 = b2f(bis_1) ######### convert to float
-# print(bis_1)
+print(bis_1)
 # print(sum(bis_1))
 bis_3 = b2f(bis_3)
 #######################        expand convolution
@@ -194,6 +194,7 @@ out_1 = out_1_tmp
 # print(out_1[0,:,:])
 for i in range(0,ker):
     out_1[i,:,:] = q12(q12(out_1[i,:,:]) + q12(bis_1[i]))
+print("after expan1");print(out_1[0,:,:])
 out_1[out_1 < 0] = 0.0 # no need for positive
 exp_out_1 = open("exp_1.txt","w")
 exp_out_1_b = open("exp_1.bin","wb")
@@ -279,7 +280,6 @@ else:
 
 sq_k_1 = open("sq_ker.txt","w")
 sq_k_1_b = open("sq_ker.bin","wb")
-# print(sq_ker_l[0,:])
 dep_h = dep//2
 
 rep_no = 1
@@ -297,6 +297,7 @@ for r in range(0,rep_no):
             sq_k_1_b.write(bytearray(lis))
     
 sq_ker_l = b2f(sq_ker_l) #########converting to float
+print("sqeeze kernel");print(sq_ker_l[0,:])
 #######################    squ bias
 sq_bis_1 = np.full(sq_ker,0x00,dtype='uint8')
 # sq_bis_1 = np.random.randint(low = 0, high = 255, size = (sq_ker),dtype='uint8')
@@ -314,9 +315,12 @@ for k in range(0,sq_ker):
         res = sg.convolve(sq_in[l,:,:],[[sq_ker_l[k,l]]] , "valid").astype(float)
         sq_out[k,l,:,:]=res
 
-# print(sq_in[0:3,:,:])
-# print(sq_ker_l[0,0])
-# print(sq_out[0,2,:,:])
+print("sqeeze input")
+print(sq_in[0,:,:])
+print("sqeeze kernel")
+print(sq_ker_l[0,0])
+print("sqeeze out before addtition, first layer, first kernel")
+print(sq_out[0,0,:,:])
 
 squ_out_tmp = np.zeros((sq_ker,dim_sq,dim_sq), dtype='float32')
 for a in range(0,sq_ker):
@@ -324,7 +328,8 @@ for a in range(0,sq_ker):
         for c in range(0,dim_sq):
             squ_out_tmp[a,b,c]=add(sq_out[a,:,b,c])
 sq_out = squ_out_tmp
-# print(sq_out[:,0,0])
+print("after addition single pixel")
+print(sq_out[:,0,0])
 # print(sq_bis_1)
 for i in range(0,sq_ker):
     sq_out[i,:,:] = sq_out[i,:,:] + sq_bis_1[i]
