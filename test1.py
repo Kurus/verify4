@@ -89,11 +89,11 @@ def add(x):
 in_l = np.zeros(dim_p*dim_p*dep, dtype='uint8').reshape((dim_p,dim_p,dep))
 if random == 0:
     # in_ori = np.arange(dim*dim*dep, dtype='uint8').reshape((dim,dim,dep))
-    in_ori = np.random.randint(low = 60, high = 100, size = (dim*dim*dep),dtype='uint8').reshape((dim,dim,dep))
+    # in_ori = np.random.randint(low = 60, high = 100, size = (dim*dim*dep),dtype='uint8').reshape((dim,dim,dep))
+    in_ori = np.full(dim*dim*dep,0x3c,dtype='uint8').reshape((dim,dim,dep))
 else:
     in_ori = np.random.randint(low = 0, high = 255, size = (dim,dim,dep), dtype='uint8')
 in_l[1:-1,1:-1,:] = in_ori
-# print(in_l[:,:,0]); print("_____________________-")
 f_in = open("input_layer.txt","w")
 f_in_b = open("input_layer.bin","wb")
 for z in range(0,dim):
@@ -103,12 +103,14 @@ for z in range(0,dim):
             for rep in range(0,ker,4):
                 f_in.write(str(lis)[1:-1]+'\n')
                 f_in_b.write(bytearray(lis))
+in_l = b2f(in_l)
+print("input layer");print(in_l[:,:,0]); 
 ########################        expand kernels 
-ker_l_1 = np.zeros(ker*dep, dtype='uint8').reshape((ker,dep))
+# ker_l_1 = np.zeros(ker*dep, dtype='uint8').reshape((ker,dep))
+ker_l_1 = np.full(ker*dep,0x3c,dtype='uint8').reshape((ker,dep))
 # ker_l_1 = np.random.randint(low = 60, high = 100, size = (ker*dep),dtype='uint8').reshape((ker,dep))
 f_k_1 = open("ker_1x1.txt","w")
 f_k_1_b = open("ker_1x1.bin","wb")
-# print(ker_l_1);print("________")
 for z in range(0,dep):
     lis = ker_l_1[:,z]
     f_k_1_b.write(bytearray(lis))
@@ -131,6 +133,7 @@ for m in range(0,dim): # repet 3x3 kernel
             f_k_3.write(str(nin)[1:-1]+'\n')
 ker_l_1 = b2f(ker_l_1)
 ker_l_3 = b2f(ker_l_3)
+print("expand kernel 1");print(ker_l_1[0,:])
 ########################        exapnd bias
 bis_1 = np.full(ker,0x3c,dtype='uint8') #one
 # bis_1 = np.random.randint(low = 60, high = 100, size = (ker),dtype='uint8')
@@ -139,16 +142,15 @@ bis_1 = np.full(ker,0x3c,dtype='uint8') #one
 bis_3 = np.full(ker,0x00,dtype='uint8')
 b_bis = open("bias.txt","w")
 b_bis_b = open("bias.bin","wb")
-print("exp bias");print(bis_1)
 for i in range(0,ker,4):
     b_bis.write(str(bis_3[i:i+4])[1:-1]+'\n')
     b_bis.write(str(bis_1[i:i+4])[1:-1]+'\n')
     b_bis_b.write(bytearray(bis_3[i:i+4]))
     b_bis_b.write(bytearray(bis_1[i:i+4]))
 bis_1 = b2f(bis_1) ######### convert to float
-print(bis_1)
 # print(sum(bis_1))
 bis_3 = b2f(bis_3)
+print("exp bias");print(bis_1)
 #######################        expand convolution
 out_1 = np.zeros(ker*dep*dim*dim, dtype='float32').reshape((ker,dep,dim,dim))
 for k in range(0,ker):
