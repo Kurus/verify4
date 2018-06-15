@@ -89,8 +89,8 @@ def add(x):
 in_l = np.zeros(dim_p*dim_p*dep, dtype='uint8').reshape((dim_p,dim_p,dep))
 if random == 0:
     # in_ori = np.arange(dim*dim*dep, dtype='uint8').reshape((dim,dim,dep))
-    # in_ori = np.random.randint(low = 60, high = 100, size = (dim*dim*dep),dtype='uint8').reshape((dim,dim,dep))
-    in_ori = np.full(dim*dim*dep,0x3c,dtype='uint8').reshape((dim,dim,dep))
+    in_ori = np.random.randint(low = 0, high = 255, size = (dim*dim*dep),dtype='uint8').reshape((dim,dim,dep))
+    # in_ori = np.full(dim*dim*dep,0x3c,dtype='uint8').reshape((dim,dim,dep))
 else:
     in_ori = np.random.randint(low = 0, high = 255, size = (dim,dim,dep), dtype='uint8')
 in_l[1:-1,1:-1,:] = in_ori
@@ -107,8 +107,8 @@ in_l = b2f(in_l)
 print("input layer");print(in_l[:,:,0]); 
 ########################        expand kernels 
 # ker_l_1 = np.zeros(ker*dep, dtype='uint8').reshape((ker,dep))
-ker_l_1 = np.full(ker*dep,0x3c,dtype='uint8').reshape((ker,dep))
-# ker_l_1 = np.random.randint(low = 60, high = 100, size = (ker*dep),dtype='uint8').reshape((ker,dep))
+# ker_l_1 = np.full(ker*dep,0x3c,dtype='uint8').reshape((ker,dep))
+ker_l_1 = np.random.randint(low = 0, high = 255, size = (ker*dep),dtype='uint8').reshape((ker,dep))
 f_k_1 = open("ker_1x1.txt","w")
 f_k_1_b = open("ker_1x1.bin","wb")
 for z in range(0,dep):
@@ -116,7 +116,8 @@ for z in range(0,dep):
     f_k_1_b.write(bytearray(lis))
     f_k_1.write(str(lis)[1:-1]+'\n')
 
-ker_l_3 = np.zeros(ker*dep*9, dtype='uint8').reshape((ker,dep,9))
+# ker_l_3 = np.zeros(ker*dep*9, dtype='uint8').reshape((ker,dep,9))
+ker_l_3 = np.random.randint(low = 0, high = 255, size = (ker,dep,9),dtype='uint8').reshape((ker,dep,9))
 # print(ker_l_3[0,0,:]);print("________")
 f_k_3 = open("ker_3x3.txt","w")
 f_k_3_b = open("ker_3x3.bin","wb")
@@ -194,8 +195,8 @@ for a in range(0,ker):# for exp kernel addition is sequential
         for c in range(0,dim):
             ans = 0.0
             for i in range(dep):
-                ans = qq(ans + qq(out_1[a,i,b,c]))
-            out_1_tmp[a,b,c]=ans
+                ans = f2d(qq(ans + f2d(qq(out_1[a,i,b,c]))))
+            out_1_tmp[a,b,c]=np.float32(ans)
 # print(out_1_tmp[0,:,:])
 out_1 = out_1_tmp
 # out_1 = np.sum(out_1,1,dtype='float32') ########change to 12 bit
