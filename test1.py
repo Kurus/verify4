@@ -1,9 +1,8 @@
 import numpy as np
 from scipy import signal as sg
-dim = 3
+dim = 3; dep = 4; ker = 32
+dim = 56;dep = 16;ker=64
 dim_p=dim + 2
-dep = 4
-ker = 32
 sq_ker = 16
 pool_en = 0
 av_pool_en = 0
@@ -34,7 +33,7 @@ from ctypes import *
 
 def dq(x):
     bits = cast(pointer(c_double(x)), POINTER(c_int64)).contents.value
-    e = ((x&0x7FF0000000000000)>>52) - 1008
+    e = ((bits&0x7FF0000000000000)>>52) - 1008
     if e<0:
         bits=0
     if e>31:
@@ -144,8 +143,9 @@ for z in range(0,dep):
     f_k_1_b.write(bytearray(lis))# already in byte
     f_k_1.write(str(lis)[1:-1]+'\n')
 
-ker_l_3 = np.zeros(ker*dep*9, dtype='uint8').reshape((ker,dep,9))
-# ker_l_3 = np.random.randint(low = 0, high = 255, size = (ker,dep,9),dtype='uint8').reshape((ker,dep,9))
+# ker_l_3 = np.zeros(ker*dep*9, dtype='uint8').reshape((ker,dep,9))
+# ker_l_3 = np.full(ker*dep*9,60,dtype='uint8').reshape((ker,dep,9))
+ker_l_3 = np.random.randint(low = 0, high = 255, size = (ker,dep,9),dtype='uint8').reshape((ker,dep,9))
 # print(ker_l_3[0,0,:]);print("________")
 f_k_3 = open("ker_3x3.txt","w")
 f_k_3_b = open("ker_3x3.bin","wb")
@@ -163,6 +163,7 @@ for m in range(0,dim): # repet 3x3 kernel
 ker_l_1 = b2dv(ker_l_1)
 ker_l_3 = b2dv(ker_l_3)
 print("expand kernel 1");print(ker_l_1[0,:])
+print("expand kernel 3");print(ker_l_3[0,:])
 ########################        exapnd bias
 bis_1 = np.full(ker,0x00,dtype='uint8') #one
 # bis_1 = np.random.randint(low = 60, high = 100, size = (ker),dtype='uint8')
@@ -201,15 +202,24 @@ for r in range(0,dim):
 out_3 = np.zeros(ker*dep*dim*dim, dtype='float64').reshape((ker,dep,dim,dim))
 for k in range(0,ker):
     for l in range(0,dep):
-        kk = np.rot90(ker_l_3[k,l].reshape((3,3)),2)
-        # kk = ker_l_3[k,l]
-        # for a in range(0,dim):
-        #     for b in range(0,dim):
-        #         ll = in_l[a:a+3,b:b+3,l].flatten()
-        #         ll = np.multiply(kk,ll)
-        res = sg.convolve(in_l[:,:,l],kk , "valid").astype(float) # addre lus #################### change to 12bit
-        out_3[k,l,:,:]=res
-# print(out_3[1,1,:,:]);print('______')
+        # kk = np.rot90(ker_l_3[k,l].reshape((3,3)),2)
+        kk = ker_l_3[k,l]
+        for a in range(0,dim):
+            for b in range(0,dim):
+                ll = in_l[a:a+3,b:b+3,l].flatten()
+                ll = np.multiply(kk,ll)
+                l1 = dq(ll[1]) + dq(ll[2])
+                l2 = dq(ll[3]) + dq(ll[4])
+                l3 = dq(ll[5]) + dq(ll[6])
+                l4 = dq(ll[7]) + dq(ll[8])
+                l1 = dq(l1) + dq(l2)
+                l2 = dq(l3) + dq(l4)
+                l1 = dq(l1) + dq(l2)
+                ll = dq(dq(l1) + dq(ll[0]) )
+                out_3[k,l,a,b]=ll
+        # res = sg.convolve(in_l[:,:,l],kk , "valid").astype(float) # addre lus #################### change to 12bit
+        # out_3[k,l,:,:]=res
+print(out_3[1,1,:,:]);print('______')
 # out_3 = np.arange(ker*dep*dim*dim, dtype='uint8').reshape((ker,dep,dim,dim))
 
 f_out_3 = open("out_3x3.txt","w")
