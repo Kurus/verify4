@@ -117,8 +117,8 @@ def add(x):
 in_l = np.zeros(dim_p*dim_p*dep, dtype='uint8').reshape((dim_p,dim_p,dep))
 if random == 0:
     # in_ori = np.arange(dim*dim*dep, dtype='uint8').reshape((dim,dim,dep))
-    in_ori = np.random.randint(low = 0, high = 255, size = (dim*dim*dep),dtype='uint8').reshape((dim,dim,dep))
-    # in_ori = np.full(dim*dim*dep,0x3c,dtype='uint8').reshape((dim,dim,dep))
+    # in_ori = np.random.randint(low = 0, high = 255, size = (dim*dim*dep),dtype='uint8').reshape((dim,dim,dep))
+    in_ori = np.full(dim*dim*dep,60,dtype='uint8').reshape((dim,dim,dep))
 else:
     in_ori = np.random.randint(low = 0, high = 255, size = (dim,dim,dep), dtype='uint8')
 in_l[1:-1,1:-1,:] = in_ori
@@ -135,8 +135,8 @@ in_l = b2dv(in_l)
 print("input layer");print(in_l[:,:,0]); 
 ########################        expand kernels 
 # ker_l_1 = np.zeros(ker*dep, dtype='uint8').reshape((ker,dep))
-# ker_l_1 = np.full(ker*dep,0x3c,dtype='uint8').reshape((ker,dep))
-ker_l_1 = np.random.randint(low = 0, high = 255, size = (ker*dep),dtype='uint8').reshape((ker,dep))
+ker_l_1 = np.full(ker*dep,60,dtype='uint8').reshape((ker,dep))
+# ker_l_1 = np.random.randint(low = 0, high = 255, size = (ker*dep),dtype='uint8').reshape((ker,dep))
 f_k_1 = open("ker_1x1.txt","w")
 f_k_1_b = open("ker_1x1.bin","wb")
 for z in range(0,dep):
@@ -181,48 +181,47 @@ bis_1 = b2dv(bis_1) ######### convert to float
 bis_3 = b2dv(bis_3)
 print("exp bias");print(bis_1)
 #######################        expand convolution
-# out_1 = np.zeros(ker*dep*dim*dim, dtype='float64').reshape((ker,dep,dim,dim))
-# for k in range(0,ker):
-#     for l in range(0,dep):
-#         res = sg.convolve(in_l[:,:,l],[[ker_l_1[k,l]]] , "valid").astype(float)
-#         out_1[k,l,:,:]=res[1:-1,1:-1]
-# # print(out_1[1,1,:,:]);print('______')
-# f_out_1 = open("out_1x1.txt","w")
-# f_out_1_b = open("out_1x1.bin","wb")
-# # out_1 = np.arange(ker*dep*dim*dim, dtype='uint8').reshape((ker,dep,dim,dim))
-# for r in range(0,dim):
-#     for d in range(0,dep):
-#         for c in range(0,dim):
-#             lis = d2bv( out_1[:,d,r,c])
-#             f_out_1_b.write(bytearray(lis))
-#             f_out_1.write(str(lis)[1:-1]+'\n')
+out_1 = np.zeros(ker*dep*dim*dim, dtype='float64').reshape((ker,dep,dim,dim))
+for k in range(0,ker):
+    for l in range(0,dep):
+        res = sg.convolve(in_l[:,:,l],[[ker_l_1[k,l]]] , "valid").astype(float)
+        out_1[k,l,:,:]=res[1:-1,1:-1]
+# print(out_1[1,1,:,:]);print('______')
+f_out_1 = open("out_1x1.txt","w")
+f_out_1_b = open("out_1x1.bin","wb")
+# out_1 = np.arange(ker*dep*dim*dim, dtype='uint8').reshape((ker,dep,dim,dim))
+for r in range(0,dim):
+    for d in range(0,dep):
+        for c in range(0,dim):
+            lis = d2bv( out_1[:,d,r,c])
+            f_out_1_b.write(bytearray(lis))
+            f_out_1.write(str(lis)[1:-1]+'\n')
+# print(out_1[1,1,:,:]);print('______')
 
+out_3 = np.zeros(ker*dep*dim*dim, dtype='float64').reshape((ker,dep,dim,dim))
+for k in range(0,ker):
+    for l in range(0,dep):
+        kk = np.rot90(ker_l_3[k,l].reshape((3,3)),2)
+        # kk = ker_l_3[k,l]
+        # for a in range(0,dim):
+        #     for b in range(0,dim):
+        #         ll = in_l[a:a+3,b:b+3,l].flatten()
+        #         ll = np.multiply(kk,ll)
+        res = sg.convolve(in_l[:,:,l],kk , "valid").astype(float) # addre lus #################### change to 12bit
+        out_3[k,l,:,:]=res
+# print(out_3[1,1,:,:]);print('______')
+# out_3 = np.arange(ker*dep*dim*dim, dtype='uint8').reshape((ker,dep,dim,dim))
 
-# out_3 = np.zeros(ker*dep*dim*dim, dtype='float64').reshape((ker,dep,dim,dim))
-# for k in range(0,ker):
-#     for l in range(0,dep):
-#         # kk = np.rot90(ker_l_3[k,l].reshape((3,3)),2)
-#         kk = ker_l_3[k,l]
-#         for a in range(0,dim):
-#             for b in range(0,dim):
-#                 ll = in_l[a:a+3,b:b+3,l].flatten()
-#                 ll = np.multiply(kk,ll)
+f_out_3 = open("out_3x3.txt","w")
+f_out_3_b = open("out_3x3.bin","wb")
+for r in range(0,dim):
+    for d in range(0,dep):
+        for c in range(0,dim):
+            lis = d2bv(out_3[:,d,r,c])
+            f_out_3_b.write(bytearray(lis))
+            f_out_3.write(str(lis)[1:-1]+'\n')
 
-#         res = sg.convolve(in_l[:,:,l],kk , "valid").astype(float) # addre lus #################### change to 12bit
-#         out_3[k,l,:,:]=res
-# # print(out_3[1,1,:,:]);print('______')
-# # out_3 = np.arange(ker*dep*dim*dim, dtype='uint8').reshape((ker,dep,dim,dim))
-
-# f_out_3 = open("out_3x3.txt","w")
-# f_out_3_b = open("out_3x3.bin","wb")
-# for r in range(0,dim):
-#     for d in range(0,dep):
-#         for c in range(0,dim):
-#             lis = d2b(out_3[:,d,r,c])
-#             f_out_3_b.write(bytearray(lis))
-#             f_out_3.write(str(lis)[1:-1]+'\n')
-
-# exit()
+exit()
 # ############################ add bias and relu
 # out_1_tmp = np.zeros(ker*dim*dim, dtype='float64').reshape((ker,dim,dim))
 # for a in range(0,ker):# for exp kernel addition is sequential
