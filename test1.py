@@ -1,7 +1,7 @@
 import numpy as np
 from scipy import signal as sg
 dim = 3; dep = 4; ker = 32
-dim = 56;dep = 16;ker=64
+dim = 56;dep = 162;ker=64
 dim_p=dim + 2
 sq_ker = 16
 pool_en = 0
@@ -165,11 +165,10 @@ ker_l_3 = b2dv(ker_l_3)
 print("expand kernel 1");print(ker_l_1[0,:])
 print("expand kernel 3");print(ker_l_3[0,:])
 ########################        exapnd bias
-bis_1 = np.full(ker,0x00,dtype='uint8') #one
-# bis_1 = np.random.randint(low = 60, high = 100, size = (ker),dtype='uint8')
-# bis_1 = np.full(ker,0x00,dtype='uint8')
+# bis_1 = np.full(ker,0x00,dtype='uint8') #one
+bis_1 = np.random.randint(low = 0, high = 255, size = (ker),dtype='uint8')
 # bis_3 = np.full(ker,0x3c,dtype='uint8')
-bis_3 = np.full(ker,0x00,dtype='uint8')
+bis_3 = np.random.randint(low = 0, high = 255, size = (ker),dtype='uint8')
 b_bis = open("bias.txt","w")
 b_bis_b = open("bias.bin","wb")
 for i in range(0,ker,4):
@@ -231,44 +230,52 @@ for r in range(0,dim):
             f_out_3_b.write(bytearray(lis))
             f_out_3.write(str(lis)[1:-1]+'\n')
 
-exit()
-# ############################ add bias and relu
-# out_1_tmp = np.zeros(ker*dim*dim, dtype='float64').reshape((ker,dim,dim))
-# for a in range(0,ker):# for exp kernel addition is sequential
-#     for b in range(0,dim):
-#         for c in range(0,dim):
-#             ans = 0.0
-#             for i in range(dep):
-#                 ans = dq(ans + dq(out_1[a,i,b,c]))
-#             out_1_tmp[a,b,c]=ans
-# # print(out_1_tmp[0,:,:])
-# out_1 = out_1_tmp
-# # out_1 = np.sum(out_1,1,dtype='float64') ########change to 12 bit
-# # print(out_1[0,:,:])
-# for i in range(0,ker):
-#     out_1[i,:,:] = q12(q12(out_1[i,:,:]) + q12(bis_1[i]))
-# print("after expan1");print(out_1[0,:,:])
-# out_1[out_1 < 0] = 0.0 # no need for positive
-# exp_out_1 = open("exp_1.txt","w")
-# exp_out_1_b = open("exp_1.bin","wb")
-# for x in range(0,dim):
-#     for y in range(0,dim):
-#         lis=d2b(out_1[:,x,y])
-#         exp_out_1_b.write(bytearray(lis))
-#         exp_out_1.write(str(lis)[1:-1]+'\n')
+############################ add bias and relu
+out_1_tmp = np.zeros(ker*dim*dim, dtype='float64').reshape((ker,dim,dim))
+for a in range(0,ker):# for exp kernel addition is sequential
+    for b in range(0,dim):
+        for c in range(0,dim):
+            ans = 0.0
+            for i in range(dep):
+                ans = dq(ans + dq(out_1[a,i,b,c]))
+            out_1_tmp[a,b,c]=ans
+# print(out_1_tmp[0,:,:])
+out_1 = out_1_tmp
+# out_1 = np.sum(out_1,1,dtype='float64') ########change to 12 bit
+# print(out_1[0,:,:])
+for i in range(0,ker):
+    out_1[i,:,:] = dqv(dqv(out_1[i,:,:]) + dqv(bis_1[i]))
+print("after expan1");print(out_1[0,:,:])
+out_1[out_1 < 0] = 0.0 # no need for positive
+exp_out_1 = open("exp_1.txt","w")
+exp_out_1_b = open("exp_1.bin","wb")
+for x in range(0,dim):
+    for y in range(0,dim):
+        lis=d2b(out_1[:,x,y])
+        exp_out_1_b.write(bytearray(lis))
+        exp_out_1.write(str(lis)[1:-1]+'\n')
 
 
+out_3_tmp = np.zeros(ker*dim*dim, dtype='float64').reshape((ker,dim,dim))
+for a in range(0,ker):# for exp kernel addition is sequential
+    for b in range(0,dim):
+        for c in range(0,dim):
+            ans = 0.0
+            for i in range(dep):
+                ans = dq(ans + dq(out_3[a,i,b,c]))
+            out_3_tmp[a,b,c]=ans
+out_3 = out_3_tmp
 # out_3 = np.sum(out_3,1,dtype='float64') ############# change
-# for i in range(0,ker):
-#     out_3[i,:,:] = q12(q12(out_3[i,:,:]) + q12(bis_3[i]))
-# out_3[out_3 < 0] = 0.0
-# exp_out_3 = open("exp_3.txt","w")
-# exp_out_3_b = open("exp_3.bin","wb")
-# for x in range(0,dim):
-#     for y in range(0,dim):
-#         lis=d2b(out_3[:,x,y])
-#         exp_out_3_b.write(bytearray(lis))
-#         exp_out_3.write(str(lis)[1:-1]+'\n')
+for i in range(0,ker):
+    out_3[i,:,:] = dqv(dqv(out_3[i,:,:]) + dqv(bis_3[i]))
+out_3[out_3 < 0] = 0.0
+exp_out_3 = open("exp_3.txt","w")
+exp_out_3_b = open("exp_3.bin","wb")
+for x in range(0,dim):
+    for y in range(0,dim):
+        lis=d2b(out_3[:,x,y])
+        exp_out_3_b.write(bytearray(lis))
+        exp_out_3.write(str(lis)[1:-1]+'\n')
 
 # ############################# pooling
 # dim_o = (dim - 1)//2
