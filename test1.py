@@ -1,7 +1,7 @@
 import numpy as np
 from scipy import signal as sg
 dim = 3; dep = 4; ker = 32
-dim = 56;dep = 162;ker=64
+dim = 13;dep = 4;ker=64
 dim_p=dim + 2
 sq_ker = 16
 pool_en = 0
@@ -130,6 +130,7 @@ for z in range(0,dim):
             for rep in range(0,ker,4):
                 f_in.write(str(lis)[1:-1]+'\n')# already in byte
                 f_in_b.write(bytearray(lis))
+exit()
 in_l = b2dv(in_l)
 print("input layer");print(in_l[:,:,0]); 
 ########################        expand kernels 
