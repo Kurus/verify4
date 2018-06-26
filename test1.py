@@ -1,7 +1,7 @@
 import numpy as np
 from scipy import signal as sg
 dim = 3; dep = 4; ker = 32
-dim = 13;dep = 4;ker=64
+dim = 3;dep = 3;ker=32
 dim_p=dim + 2
 sq_ker = 16
 pool_en = 0
@@ -34,6 +34,9 @@ from ctypes import *
 def dq(x):
     bits = cast(pointer(c_double(x)), POINTER(c_int64)).contents.value
     e = ((bits&0x7FF0000000000000)>>52) - 1008
+    man = bits&0x000FC00000000000
+    if e==0 and man==0:
+        bits = 0
     if e<0:
         bits=0
     if e>31:
@@ -43,7 +46,6 @@ def dq(x):
     # bits=(bits>>17)<<17
     bits=bits&0xFFFFC00000000000
     return cast(pointer(c_int64(bits)), POINTER(c_double)).contents.value
-dqv= np.vectorize(dq)
 
 def d2b(x):
     x = cast(pointer(c_double(x)), POINTER(c_int64)).contents.value
@@ -115,9 +117,9 @@ def add(x):
 #######################         Input image
 in_l = np.zeros(dim_p*dim_p*dep, dtype='uint8').reshape((dim_p,dim_p,dep))
 if random == 0:
-    # in_ori = np.arange(dim*dim*dep, dtype='uint8').reshape((dim,dim,dep))
+    in_ori = np.arange(dim*dim*dep, dtype='uint8').reshape((dim,dim,dep))
     # in_ori = np.random.randint(low = 0, high = 255, size = (dim*dim*dep),dtype='uint8').reshape((dim,dim,dep))
-    in_ori = np.full(dim*dim*dep,60,dtype='uint8').reshape((dim,dim,dep))
+    # in_ori = np.full(dim*dim*dep,60,dtype='uint8').reshape((dim,dim,dep))
 else:
     in_ori = np.random.randint(low = 0, high = 255, size = (dim,dim,dep), dtype='uint8')
 in_l[1:-1,1:-1,:] = in_ori
@@ -130,9 +132,8 @@ for z in range(0,dim):
             for rep in range(0,ker,4):
                 f_in.write(str(lis)[1:-1]+'\n')# already in byte
                 f_in_b.write(bytearray(lis))
-exit()
-in_l = b2dv(in_l)
 print("input layer");print(in_l[:,:,0]); 
+in_l = b2dv(in_l)
 ########################        expand kernels 
 # ker_l_1 = np.zeros(ker*dep, dtype='uint8').reshape((ker,dep))
 ker_l_1 = np.full(ker*dep,60,dtype='uint8').reshape((ker,dep))
@@ -144,9 +145,9 @@ for z in range(0,dep):
     f_k_1_b.write(bytearray(lis))# already in byte
     f_k_1.write(str(lis)[1:-1]+'\n')
 
-# ker_l_3 = np.zeros(ker*dep*9, dtype='uint8').reshape((ker,dep,9))
+ker_l_3 = np.arange(ker*dep*9, dtype='uint8').reshape((ker,dep,9))
 # ker_l_3 = np.full(ker*dep*9,60,dtype='uint8').reshape((ker,dep,9))
-ker_l_3 = np.random.randint(low = 0, high = 255, size = (ker,dep,9),dtype='uint8').reshape((ker,dep,9))
+# ker_l_3 = np.random.randint(low = 0, high = 255, size = (ker,dep,9),dtype='uint8').reshape((ker,dep,9))
 # print(ker_l_3[0,0,:]);print("________")
 f_k_3 = open("ker_3x3.txt","w")
 f_k_3_b = open("ker_3x3.bin","wb")
@@ -161,10 +162,10 @@ for m in range(0,dim): # repet 3x3 kernel
             nin = lis[x:x+8,-1].flatten()[::-1] #reversed
             f_k_3_b.write(bytearray(nin))
             f_k_3.write(str(nin)[1:-1]+'\n')
+print("expand kernel 1");print(ker_l_1[0,:])
+print("expand kernel 3");print(ker_l_3[11, 0,:])
 ker_l_1 = b2dv(ker_l_1)
 ker_l_3 = b2dv(ker_l_3)
-print("expand kernel 1");print(ker_l_1[0,:])
-print("expand kernel 3");print(ker_l_3[0,:])
 ########################        exapnd bias
 # bis_1 = np.full(ker,0x00,dtype='uint8') #one
 bis_1 = np.random.randint(low = 0, high = 255, size = (ker),dtype='uint8')
@@ -229,7 +230,8 @@ for r in range(0,dim):
         for c in range(0,dim):
             lis = d2bv(out_3[:,d,r,c])
             f_out_3_b.write(bytearray(lis))
-            f_out_3.write(str(lis)[1:-1]+'\n')
+            f_out_3.write(str(list(lis))[1:-1]+'\n')
+exit()
 
 ############################ add bias and relu
 out_1_tmp = np.zeros(ker*dim*dim, dtype='float64').reshape((ker,dim,dim))
