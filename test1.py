@@ -46,6 +46,7 @@ def dq(x):
     # bits=(bits>>17)<<17
     bits=bits&0xFFFFC00000000000
     return cast(pointer(c_int64(bits)), POINTER(c_double)).contents.value
+dqv = np.vectorize(dq)
 
 def d2b(x):
     x = cast(pointer(c_double(x)), POINTER(c_int64)).contents.value
@@ -231,7 +232,6 @@ for r in range(0,dim):
             lis = d2bv(out_3[:,d,r,c])
             f_out_3_b.write(bytearray(lis))
             f_out_3.write(str(list(lis))[1:-1]+'\n')
-exit()
 
 ############################ add bias and relu
 out_1_tmp = np.zeros(ker*dim*dim, dtype='float64').reshape((ker,dim,dim))
