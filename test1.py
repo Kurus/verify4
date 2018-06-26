@@ -254,7 +254,7 @@ exp_out_1 = open("exp_1.txt","w")
 exp_out_1_b = open("exp_1.bin","wb")
 for x in range(0,dim):
     for y in range(0,dim):
-        lis=d2b(out_1[:,x,y])
+        lis=d2bv(out_1[:,x,y])
         exp_out_1_b.write(bytearray(lis))
         exp_out_1.write(str(lis)[1:-1]+'\n')
 
@@ -276,7 +276,7 @@ exp_out_3 = open("exp_3.txt","w")
 exp_out_3_b = open("exp_3.bin","wb")
 for x in range(0,dim):
     for y in range(0,dim):
-        lis=d2b(out_3[:,x,y])
+        lis=d2bv(out_3[:,x,y])
         exp_out_3_b.write(bytearray(lis))
         exp_out_3.write(str(lis)[1:-1]+'\n')
 
