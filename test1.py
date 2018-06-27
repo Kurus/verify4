@@ -1,7 +1,7 @@
 import numpy as np
 from scipy import signal as sg
 dim = 3; dep = 4; ker = 32
-dim = 3;dep = 3;ker=32
+dim = 3;dep = 3;ker=64
 dim_p=dim + 2
 sq_ker = 16
 pool_en = 0
@@ -103,16 +103,51 @@ b2dv = np.vectorize(b2d)
 #     return np.uint8(bits)
 # f2b = np.vectorize(flt_byt)
 
+# def add(x):
+#     while len(x)!=1:#hiearchical addition
+#         t=[]
+#         for a in range(0,len(x),2):
+#             if a+1>=len(x):
+#                 t.append(dq(x[a]))
+#                 continue
+#             t.append(dq(x[a])+dq(x[a+1]))
+#         x=t
+#     return x[0]
+
 def add(x):
-    while len(x)!=1:#hiearchical addition
+    np.set_printoptions(linewidth=np.inf)
+    assert(x.size%128 == 0)
+    prt = np.split(x,x.size//128)
+    ans = []
+    for i in prt:
+        ii = i
+        assert(ii.size==128)
+        # print(ii)
+        for n in range(0,3):#64-64 to 8-8 (1x1-3x3)
+            t=[]
+            for a in range(0,len(ii),2):
+                t.append(dq(ii[a])+dq(ii[a+1]))
+            ii = np.array(t)
+        assert(ii.size==16)
+        # print(ii)
         t=[]
-        for a in range(0,len(x),2):
-            if a+1>=len(x):
-                t.append(dq(x[a]))
-                continue
-            t.append(dq(x[a])+dq(x[a+1]))
-        x=t
-    return x[0]
+        for a in range(0,8):
+            t.append(dq(ii[a])+dq(ii[a+8]))
+        ii=np.array(t)
+        assert(ii.size==8)
+        # print(ii)
+        for n in range(0,3):
+            t=[]
+            for a in range(0,len(ii),2):
+                t.append(dq(ii[a])+dq(ii[a+1]))
+            ii = np.array(t)
+        assert(ii.size==1)
+        # print(ii)
+        ans.append(ii[0])
+    res = 0
+    for a in ans:
+        res = dq(res)+dq(a)
+    return dq(res)
 
 #######################         Input image
 in_l = np.zeros(dim_p*dim_p*dep, dtype='uint8').reshape((dim_p,dim_p,dep))
@@ -139,7 +174,6 @@ print("input layer");print(in_l[:,:,0]);
 ########################        expand kernels 
 # ker_l_1 = np.zeros(ker*dep, dtype='uint8').reshape((ker,dep))
 ker_l_1 = np.full(ker*dep,60,dtype='uint8').reshape((ker,dep))
-ker_l_1[0,0]=60
 # ker_l_1 = np.random.randint(low = 0, high = 255, size = (ker*dep),dtype='uint8').reshape((ker,dep))
 f_k_1 = open("ker_1x1.txt","w")
 f_k_1_b = open("ker_1x1.bin","wb")
