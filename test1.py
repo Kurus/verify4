@@ -1,3 +1,4 @@
+# this is for float hardware verfification
 import numpy as np
 from scipy import signal as sg
 dim = 3; dep = 4; ker = 32
@@ -169,6 +170,14 @@ for z in range(0,dim):
             for rep in range(0,ker,4):
                 f_in.write(str(lis)[1:-1]+'\n')# already in byte
                 f_in_b.write(bytearray(lis))
+f_in_c = open("input_layer_c.txt","w")
+f_in_c_b = open("input_layer_c.bin","wb")
+for d in range(0,dep):
+    for z in range(0,dim):
+        for y in range(0,dim):
+            lis = in_ori[z,y,d].flatten().tolist()
+            f_in_c.write(str(lis)[1:-1]+'\n')
+            f_in_c_b.write(bytearray(lis))
 in_l = b2dv(in_l)
 print("input layer");print(in_l[:,:,0]); 
 ########################        expand kernels 
@@ -178,9 +187,14 @@ ker_l_1 = np.full(ker*dep,60,dtype='uint8').reshape((ker,dep))
 f_k_1 = open("ker_1x1.txt","w")
 f_k_1_b = open("ker_1x1.bin","wb")
 for z in range(0,dep):
-    lis = ker_l_1[:,z]
-    f_k_1_b.write(bytearray(lis))# already in byte
-    f_k_1.write(str(lis)[1:-1]+'\n')
+    for x in range(0,ker,8):
+        lis = ker_l_1[x:x+4,z][::-1]
+        f_k_1_b.write(bytearray(lis))
+        f_k_1.write(str(lis)[1:-1]+'\n')
+
+        lis = ker_l_1[x+4:x+8,z][::-1]
+        f_k_1_b.write(bytearray(lis))
+        f_k_1.write(str(lis)[1:-1]+'\n')
 
 # ker_l_3 = np.arange(ker*dep*9, dtype='uint8').reshape((ker,dep,9))
 ker_l_3 = np.full(ker*dep*9,0,dtype='uint8').reshape((ker,dep,9))
@@ -188,17 +202,16 @@ ker_l_3 = np.full(ker*dep*9,0,dtype='uint8').reshape((ker,dep,9))
 # print(ker_l_3[0,0,:]);print("________")
 f_k_3 = open("ker_3x3.txt","w")
 f_k_3_b = open("ker_3x3.bin","wb")
-for m in range(0,dim): # repet 3x3 kernel
-    for z in range(0,dep):
-        lis = ker_l_3[:,z,:]
-        for x in range(0,ker,8):
-            for a in range(0,8):
-                eig = lis[x+a,0:8]
-                f_k_3_b.write(bytearray(eig))# already in byte
-                f_k_3.write(str(eig)[1:-1]+'\n')
-            nin = lis[x:x+8,-1].flatten()[::-1] #reversed
-            f_k_3_b.write(bytearray(nin))
-            f_k_3.write(str(nin)[1:-1]+'\n')
+for z in range(0,dep):
+    lis = ker_l_3[:,z,:]
+    for x in range(0,ker,8):
+        for a in range(0,8):
+            eig = lis[x+a,[7,8,3,4,5,0,1,2]] #reversed
+            f_k_3_b.write(bytearray(eig))
+            f_k_3.write(str(eig)[1:-1]+'\n')
+        nin = lis[x:x+8,6].flatten() #no reversed 6 means 
+        f_k_3_b.write(bytearray(nin))
+        f_k_3.write(str(nin)[1:-1]+'\n')
 ker_l_1 = b2dv(ker_l_1)
 ker_l_3 = b2dv(ker_l_3)
 print("expand kernel 1");print(ker_l_1[0,:])
@@ -211,10 +224,12 @@ bis_3 = np.full(ker,0x00,dtype='uint8')
 b_bis = open("bias.txt","w")
 b_bis_b = open("bias.bin","wb")
 for i in range(0,ker,4):
-    b_bis.write(str(bis_3[i:i+4])[1:-1]+'\n')
-    b_bis.write(str(bis_1[i:i+4])[1:-1]+'\n')
-    b_bis_b.write(bytearray(bis_3[i:i+4]))
-    b_bis_b.write(bytearray(bis_1[i:i+4]))
+    lis_b3 = bis_3[i:i+4][::-1] # reverse
+    lis_b1 = bis_1[i:i+4][::-1] #reverst
+    b_bis.write(str(lis_b1)[1:-1]+'\n')
+    b_bis.write(str(lis_b3)[1:-1]+'\n')
+    b_bis_b.write(bytearray(lis_b1))
+    b_bis_b.write(bytearray(lis_b3))
 bis_1 = b2dv(bis_1) ######### convert to float
 # print(sum(bis_1))
 bis_3 = b2dv(bis_3)
@@ -401,11 +416,11 @@ if(sq_rep == 1):
 for r in range(0,rep_no):
     for x in range(0,sq_ker):
         for z in range(0,dep_h,8):
-            lis = sq_ker_l[x,z+dep_h:z+dep_h+8]#kerle of 3x3 part
+            lis = sq_ker_l[x,z+dep_h:z+dep_h+8][::-1]#kerle of 3x3 part # reverse added
             sq_k_1.write(str(lis)[1:-1]+'\n')
             sq_k_1_b.write(bytearray(lis))
 
-            lis = sq_ker_l[x,z:z+8]
+            lis = sq_ker_l[x,z:z+8][::-1] #reverse added
             sq_k_1.write(str(lis)[1:-1]+'\n')
             sq_k_1_b.write(bytearray(lis))
     
@@ -417,8 +432,11 @@ sq_bis_1 = np.full(sq_ker,0x00,dtype='uint8')
 # print(sq_bis_1)
 f_sq_bis = open("sq_bias.txt","w")
 f_sq_bis_b = open("sq_bias.bin","wb")
-f_sq_bis.write(str(sq_bis_1)[1:-1]+'\n')
-f_sq_bis_b.write(bytearray(sq_bis_1))
+for x in range(0,sq_ker,8):
+    lis = sq_bis_1[x:x+8]
+    # lis = lis[::-1] #reverse
+    f_sq_bis.write(str(lis)[1:-1]+'\n')
+    f_sq_bis_b.write(bytearray(lis))
 
 sq_bis_1 = b2dv(sq_bis_1)# converting to float
 # ######################    squ convoluve
