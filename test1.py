@@ -484,7 +484,7 @@ for r in range(0,dim_sq):
 f_sq_out_1_c = open("sq_out_c.txt","w")
 for r in range(0,sq_ker):
     for d in range(0,dim_sq):
-        lis = sq_out[r,d,:]
+        lis = d2bv(sq_out[r,d,:])
         lisStr = ' '.join(map(str,list(lis)))
         f_sq_out_1_c.write(lisStr+'\n')
 ########################     avg pool
