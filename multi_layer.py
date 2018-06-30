@@ -19,6 +19,9 @@ num_layer = 2
 
 final_out = []
 cwd = os.getcwd()
+path = cwd + "/bin"
+os.makedirs(path, exist_ok=True)
+os.chdir(path)
 
 ###########quantization weight###########
 from ctypes import *
@@ -161,10 +164,6 @@ def add(x):
     return dq(res)
 
 for cur_ly in range(0,num_layer):
-    path = cwd + "/layer"+str(cur_ly)
-    os.makedirs(path, exist_ok=True)
-    os.chdir(path)
-    print(os.getcwd())
     ker = ker_list[cur_ly]
     sq_ker = sq_ker_list[cur_ly]
     pool_en = pool_en_list[cur_ly]
@@ -211,7 +210,7 @@ for cur_ly in range(0,num_layer):
     else: 
         in_ori_c = in_ori
     # f_in_c = open("input_layer_c.txt","w")
-    f_in_c_b = open("input_layer_c.bin","wb")
+    f_in_c_b = open("input_layer_c"+"_"+str(cur_ly)+".bin","wb")
     for d in range(0,dep):
         for z in range(0,dim_c):
             for y in range(0,dim_c):
@@ -231,7 +230,7 @@ for cur_ly in range(0,num_layer):
         ker_l_1 = np.zeros(ker*dep, dtype='uint8').reshape((ker,dep))
     print("kernel1");print(ker_l_1)
     # f_k_1 = open("ker_1x1.txt","w")
-    f_k_1_b = open("ker_1x1.bin","wb")
+    f_k_1_b = open("ker_1x1"+"_"+str(cur_ly)+".bin","wb")
     for z in range(0,dep):
         for x in range(0,ker,8):
             lis = ker_l_1[x:x+4,z][::-1]
@@ -247,7 +246,7 @@ for cur_ly in range(0,num_layer):
     # ker_l_3 = np.random.randint(low = 0, high = 255, size = (ker,dep,9),dtype='uint8').reshape((ker,dep,9))
     # print(ker_l_3[0,0,:]);print("________")
     # f_k_3 = open("ker_3x3.txt","w")
-    f_k_3_b = open("ker_3x3.bin","wb")
+    f_k_3_b = open("ker_3x3"+"_"+str(cur_ly)+".bin","wb")
     # for m in range(0,dim): # repet 3x3 kernel # removed repeating
     # ordering 78 345 012 ## 6
     for z in range(0,dep):
@@ -272,7 +271,7 @@ for cur_ly in range(0,num_layer):
     bis_3 = np.full(ker,0x00,dtype='uint8')
     # bis_3 = np.random.randint(low = 0, high = 255, size = (ker),dtype='uint8')
     # b_bis = open("bias.txt","w")
-    b_bis_b = open("bias.bin","wb")
+    b_bis_b = open("bias"+"_"+str(cur_ly)+".bin","wb")
     for i in range(0,ker,4):
         lis_b3 = bis_3[i:i+4][::-1] # reverse
         lis_b1 = bis_1[i:i+4][::-1] #reverst
@@ -495,7 +494,7 @@ for cur_ly in range(0,num_layer):
         sq_ker_l_write = sq_ker_l
 
     # sq_k_1 = open("sq_ker.txt","w")
-    sq_k_1_b = open("sq_ker.bin","wb")
+    sq_k_1_b = open("sq_ker"+"_"+str(cur_ly)+".bin","wb")
     dep_h = dep//2
 
     rep_no = 1
@@ -519,7 +518,7 @@ for cur_ly in range(0,num_layer):
     # sq_bis_1 = np.random.randint(low = 0, high = 255, size = (sq_ker),dtype='uint8')
     # print(sq_bis_1)
     # f_sq_bis = open("sq_bias.txt","w")
-    f_sq_bis_b = open("sq_bias.bin","wb")
+    f_sq_bis_b = open("sq_bias"+"_"+str(cur_ly)+".bin","wb")
     for x in range(0,sq_ker,8):
         lis = sq_bis_1[x:x+8]
         # lis = lis[::-1] #reverse
@@ -568,7 +567,7 @@ for cur_ly in range(0,num_layer):
     #         f_sq_out_1_b.write(bytearray(lis))
     #         f_sq_out_1.write(str(lis)[1:-1]+'\n')
 
-    f_sq_out_1_c = open("sq_out_c.txt","w")
+    f_sq_out_1_c = open("sq_out_c"+"_"+str(cur_ly)+".txt","w")
     for r in range(0,sq_ker):
         for d in range(0,dim_sq):
             lis = sq_out[r,d,:]
