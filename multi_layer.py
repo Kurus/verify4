@@ -187,15 +187,15 @@ for cur_ly in range(0,num_layer):
     in_l = np.zeros(dim_p*dim_p*dep, dtype='uint8').reshape((dim_p,dim_p,dep))
     in_l[1:-1,1:-1,:] = in_ori
     print("input layer");print(in_l[:,:,0]);
-    f_in = open("input_layer.txt","w")
-    f_in_b = open("input_layer.bin","wb")
-    for z in range(0,dim):
-        for y in range(0,dep):
-            for x in range(0,dim):
-                lis = in_l[z:z+3,x:x+3,y].flatten().tolist()
-                for rep in range(0,ker,4):
-                    f_in.write(str(lis)[1:-1]+'\n')
-                    f_in_b.write(bytearray(lis))
+    # f_in = open("input_layer.txt","w")
+    # f_in_b = open("input_layer.bin","wb")
+    # for z in range(0,dim):
+    #     for y in range(0,dep):
+    #         for x in range(0,dim):
+    #             lis = in_l[z:z+3,x:x+3,y].flatten().tolist()
+    #             for rep in range(0,ker,4):
+    #                 f_in.write(str(lis)[1:-1]+'\n')
+    #                 f_in_b.write(bytearray(lis))
 
     in_ori_c = [] # for first layer in hardware it need to be mod 4
     dim_c = dim
@@ -210,13 +210,13 @@ for cur_ly in range(0,num_layer):
         in_ori_c[0:dim,0:dim,:] = in_ori
     else: 
         in_ori_c = in_ori
-    f_in_c = open("input_layer_c.txt","w")
+    # f_in_c = open("input_layer_c.txt","w")
     f_in_c_b = open("input_layer_c.bin","wb")
     for d in range(0,dep):
         for z in range(0,dim_c):
             for y in range(0,dim_c):
                 lis = in_ori_c[z,y,d].flatten().tolist()
-                f_in_c.write(str(lis)[1:-1]+'\n')
+                # f_in_c.write(str(lis)[1:-1]+'\n')
                 f_in_c_b.write(bytearray(lis))
     if stride2_en==1: # valid padding
         in_l=in_ori
@@ -230,23 +230,23 @@ for cur_ly in range(0,num_layer):
     if stride2_en == 1:# for stride 2 exp 1 is zero
         ker_l_1 = np.zeros(ker*dep, dtype='uint8').reshape((ker,dep))
     print("kernel1");print(ker_l_1)
-    f_k_1 = open("ker_1x1.txt","w")
+    # f_k_1 = open("ker_1x1.txt","w")
     f_k_1_b = open("ker_1x1.bin","wb")
     for z in range(0,dep):
         for x in range(0,ker,8):
             lis = ker_l_1[x:x+4,z][::-1]
             f_k_1_b.write(bytearray(lis))
-            f_k_1.write(str(lis)[1:-1]+'\n')
+            # f_k_1.write(str(lis)[1:-1]+'\n')
 
             lis = ker_l_1[x+4:x+8,z][::-1]
             f_k_1_b.write(bytearray(lis))
-        f_k_1.write(str(lis)[1:-1]+'\n')
+        # f_k_1.write(str(lis)[1:-1]+'\n')
 
     # ker_l_3 = np.arange(ker*dep*9, dtype='uint8').reshape((ker,dep,9))
     ker_l_3 = np.full(ker*dep*9,0,dtype='uint8').reshape((ker,dep,9))
     # ker_l_3 = np.random.randint(low = 0, high = 255, size = (ker,dep,9),dtype='uint8').reshape((ker,dep,9))
     # print(ker_l_3[0,0,:]);print("________")
-    f_k_3 = open("ker_3x3.txt","w")
+    # f_k_3 = open("ker_3x3.txt","w")
     f_k_3_b = open("ker_3x3.bin","wb")
     # for m in range(0,dim): # repet 3x3 kernel # removed repeating
     # ordering 78 345 012 ## 6
@@ -256,10 +256,10 @@ for cur_ly in range(0,num_layer):
             for a in range(0,8):
                 eig = lis[x+a,[7,8,3,4,5,0,1,2]] #reversed
                 f_k_3_b.write(bytearray(eig))
-                f_k_3.write(str(eig)[1:-1]+'\n')
+                # f_k_3.write(str(eig)[1:-1]+'\n')
             nin = lis[x:x+8,6].flatten() #no reversed 6 means 
             f_k_3_b.write(bytearray(nin))
-            f_k_3.write(str(nin)[1:-1]+'\n')
+            # f_k_3.write(str(nin)[1:-1]+'\n')
     ker_l_1 = b2dv(ker_l_1)
     ker_l_3 = b2dv(ker_l_3)
     print("expand kernel 1");print(ker_l_1[0,:])
@@ -271,13 +271,13 @@ for cur_ly in range(0,num_layer):
         bis_1 = np.full(ker,0,dtype='uint8')
     bis_3 = np.full(ker,0x00,dtype='uint8')
     # bis_3 = np.random.randint(low = 0, high = 255, size = (ker),dtype='uint8')
-    b_bis = open("bias.txt","w")
+    # b_bis = open("bias.txt","w")
     b_bis_b = open("bias.bin","wb")
     for i in range(0,ker,4):
         lis_b3 = bis_3[i:i+4][::-1] # reverse
         lis_b1 = bis_1[i:i+4][::-1] #reverst
-        b_bis.write(str(lis_b1)[1:-1]+'\n')
-        b_bis.write(str(lis_b3)[1:-1]+'\n')
+        # b_bis.write(str(lis_b1)[1:-1]+'\n')
+        # b_bis.write(str(lis_b3)[1:-1]+'\n')
         b_bis_b.write(bytearray(lis_b1))
         b_bis_b.write(bytearray(lis_b3))
     bis_1 = b2dv(bis_1) ######### convert to float
@@ -294,15 +294,15 @@ for cur_ly in range(0,num_layer):
                 res = sg.convolve(in_l[:,:,l],[[ker_l_1[k,l]]] , "valid").astype(float)
                 out_1[k,l,:,:]=dqv(res[1:-1,1:-1])
     print("exp1 conv - no addition");print(out_1[0,0,:,:]);
-    f_out_1 = open("out_1x1.txt","w")
-    f_out_1_b = open("out_1x1.bin","wb")
-    # out_1 = np.arange(ker*dep*dim*dim, dtype='uint8').reshape((ker,dep,dim,dim))
-    for r in range(0,dim):
-        for d in range(0,dep):
-            for c in range(0,dim):
-                lis = d2bv( out_1[:,d,r,c])
-                f_out_1_b.write(bytearray(lis))
-                f_out_1.write(str(lis)[1:-1]+'\n')
+    # f_out_1 = open("out_1x1.txt","w")
+    # f_out_1_b = open("out_1x1.bin","wb")
+    # # out_1 = np.arange(ker*dep*dim*dim, dtype='uint8').reshape((ker,dep,dim,dim))
+    # for r in range(0,dim):
+    #     for d in range(0,dep):
+    #         for c in range(0,dim):
+    #             lis = d2bv( out_1[:,d,r,c])
+    #             f_out_1_b.write(bytearray(lis))
+    #             f_out_1.write(str(lis)[1:-1]+'\n')
     print("exp1 add bf add")
     print(out_1[0,0,:,:])
     if stride2_en==0:
@@ -344,14 +344,14 @@ for cur_ly in range(0,num_layer):
     print(out_3[0,0,:,:])
     # out_3 = np.arange(ker*dep*dim*dim, dtype='uint8').reshape((ker,dep,dim,dim))
 
-    f_out_3 = open("out_3x3.txt","w")
-    f_out_3_b = open("out_3x3.bin","wb")
-    for r in range(0,dim):
-        for d in range(0,dep):
-            for c in range(0,dim):
-                lis = d2bv(out_3[:,d,r,c])
-                f_out_3_b.write(bytearray(lis))
-                f_out_3.write(str(list(lis))[1:-1]+'\n')
+    # f_out_3 = open("out_3x3.txt","w")
+    # f_out_3_b = open("out_3x3.bin","wb")
+    # for r in range(0,dim):
+    #     for d in range(0,dep):
+    #         for c in range(0,dim):
+    #             lis = d2bv(out_3[:,d,r,c])
+    #             f_out_3_b.write(bytearray(lis))
+    #             f_out_3.write(str(list(lis))[1:-1]+'\n')
 
     ############################ add bias and relu
     out_1_tmp = np.zeros(ker*dim*dim, dtype='float64').reshape((ker,dim,dim))
@@ -370,13 +370,13 @@ for cur_ly in range(0,num_layer):
         out_1[i,:,:] = dqv(dqv(out_1[i,:,:]) + dqv(bis_1[i]))
     print("after expan1");print(out_1[0,:,:])
     out_1[out_1 < 0] = 0.0 # no need for positive
-    exp_out_1 = open("exp_1.txt","w")
-    exp_out_1_b = open("exp_1.bin","wb")
-    for x in range(0,dim):
-        for y in range(0,dim):
-            lis=d2bv(out_1[:,x,y])
-            exp_out_1_b.write(bytearray(lis))
-            exp_out_1.write(str(lis)[1:-1]+'\n')
+    # exp_out_1 = open("exp_1.txt","w")
+    # exp_out_1_b = open("exp_1.bin","wb")
+    # for x in range(0,dim):
+    #     for y in range(0,dim):
+    #         lis=d2bv(out_1[:,x,y])
+    #         exp_out_1_b.write(bytearray(lis))
+    #         exp_out_1.write(str(lis)[1:-1]+'\n')
 
 
     out_3_tmp = np.zeros(ker*dim*dim, dtype='float64').reshape((ker,dim,dim))
@@ -392,13 +392,13 @@ for cur_ly in range(0,num_layer):
     for i in range(0,ker):
         out_3[i,:,:] = dqv(dqv(out_3[i,:,:]) + dqv(bis_3[i]))
     out_3[out_3 < 0] = 0.0
-    exp_out_3 = open("exp_3.txt","w")
-    exp_out_3_b = open("exp_3.bin","wb")
-    for x in range(0,dim):
-        for y in range(0,dim):
-            lis=d2bv(out_3[:,x,y])
-            exp_out_3_b.write(bytearray(lis))
-            exp_out_3.write(str(lis)[1:-1]+'\n')
+    # exp_out_3 = open("exp_3.txt","w")
+    # exp_out_3_b = open("exp_3.bin","wb")
+    # for x in range(0,dim):
+    #     for y in range(0,dim):
+    #         lis=d2bv(out_3[:,x,y])
+    #         exp_out_3_b.write(bytearray(lis))
+    #         exp_out_3.write(str(lis)[1:-1]+'\n')
     print("exp1 after bias sinle pix")
     print(out_1[:,0,0])
     print("exp1 after bias single layer")
@@ -424,14 +424,14 @@ for cur_ly in range(0,num_layer):
     # print("after pool 1")
     # print(pool_1[0,:,:]) # pool checking 
 
-    pool_out_1 = open("pool_1.txt","w")
-    pool_out_1_b = open("pool_1.bin","wb")
-    # print(pool_1)
-    for x in range(0,dim_o):
-        for y in range(0,dim_o):
-            lis=pool_1[:,x,y]
-            pool_out_1_b.write(bytearray(lis))
-            pool_out_1.write(str(lis)[1:-1]+'\n')
+    # pool_out_1 = open("pool_1.txt","w")
+    # pool_out_1_b = open("pool_1.bin","wb")
+    # # print(pool_1)
+    # for x in range(0,dim_o):
+    #     for y in range(0,dim_o):
+    #         lis=pool_1[:,x,y]
+    #         pool_out_1_b.write(bytearray(lis))
+    #         pool_out_1.write(str(lis)[1:-1]+'\n')
 
     # out_3 = np.arange(ker*dim*dim, dtype='float64').reshape((ker,dim,dim)) #test pool
     # print(out_3)
@@ -447,14 +447,14 @@ for cur_ly in range(0,num_layer):
     # print("after pool 3")
     # print(pool_3[0,:,:]) # pool checking 
 
-    pool_out_3 = open("pool_3.txt","w")
-    pool_out_3_b = open("pool_3.bin","wb")
-    # print(pool_3)
-    for x in range(0,dim_o):
-        for y in range(0,dim_o):
-            lis=pool_3[:,x,y]
-            pool_out_3_b.write(bytearray(lis))
-            pool_out_3.write(str(lis)[1:-1]+'\n')
+    # pool_out_3 = open("pool_3.txt","w")
+    # pool_out_3_b = open("pool_3.bin","wb")
+    # # print(pool_3)
+    # for x in range(0,dim_o):
+    #     for y in range(0,dim_o):
+    #         lis=pool_3[:,x,y]
+    #         pool_out_3_b.write(bytearray(lis))
+    #         pool_out_3.write(str(lis)[1:-1]+'\n')
 
     ########################## squeeze
     sq_in=[] # dep*dim*dim
@@ -494,7 +494,7 @@ for cur_ly in range(0,num_layer):
     else:
         sq_ker_l_write = sq_ker_l
 
-    sq_k_1 = open("sq_ker.txt","w")
+    # sq_k_1 = open("sq_ker.txt","w")
     sq_k_1_b = open("sq_ker.bin","wb")
     dep_h = dep//2
 
@@ -505,11 +505,11 @@ for cur_ly in range(0,num_layer):
         for x in range(0,sq_ker):
             for z in range(0,dep_h,8):
                 lis = sq_ker_l[x,z+dep_h:z+dep_h+8][::-1]#kerle of 3x3 part # reverse added
-                sq_k_1.write(str(lis)[1:-1]+'\n')
+                # sq_k_1.write(str(lis)[1:-1]+'\n')
                 sq_k_1_b.write(bytearray(lis))
 
                 lis = sq_ker_l[x,z:z+8][::-1] #reverse added
-                sq_k_1.write(str(lis)[1:-1]+'\n')
+                # sq_k_1.write(str(lis)[1:-1]+'\n')
                 sq_k_1_b.write(bytearray(lis))
         
     sq_ker_l = b2dv(sq_ker_l) #########converting to float
@@ -518,12 +518,12 @@ for cur_ly in range(0,num_layer):
     sq_bis_1 = np.full(sq_ker,0x00,dtype='uint8')
     # sq_bis_1 = np.random.randint(low = 0, high = 255, size = (sq_ker),dtype='uint8')
     # print(sq_bis_1)
-    f_sq_bis = open("sq_bias.txt","w")
+    # f_sq_bis = open("sq_bias.txt","w")
     f_sq_bis_b = open("sq_bias.bin","wb")
     for x in range(0,sq_ker,8):
         lis = sq_bis_1[x:x+8]
         # lis = lis[::-1] #reverse
-        f_sq_bis.write(str(lis)[1:-1]+'\n')
+        # f_sq_bis.write(str(lis)[1:-1]+'\n')
         f_sq_bis_b.write(bytearray(lis))
 
     sq_bis_1 = b2dv(sq_bis_1)# converting to float
@@ -560,13 +560,13 @@ for cur_ly in range(0,num_layer):
 
     final_out = sq_out
     # sq_out = np.arange(sq_ker*dim_sq*dim_sq, dtype='uint8').reshape((sq_ker,dim_sq,dim_sq)) # test ouptu
-    f_sq_out_1 = open("sq_out.txt","w")
-    f_sq_out_1_b = open("sq_out.bin","wb")
-    for r in range(0,dim_sq):
-        for d in range(0,sq_ker):
-            lis = d2bv(sq_out[d,r,:])
-            f_sq_out_1_b.write(bytearray(lis))
-            f_sq_out_1.write(str(lis)[1:-1]+'\n')
+    # f_sq_out_1 = open("sq_out.txt","w")
+    # f_sq_out_1_b = open("sq_out.bin","wb")
+    # for r in range(0,dim_sq):
+    #     for d in range(0,sq_ker):
+    #         lis = d2bv(sq_out[d,r,:])
+    #         f_sq_out_1_b.write(bytearray(lis))
+    #         f_sq_out_1.write(str(lis)[1:-1]+'\n')
 
     f_sq_out_1_c = open("sq_out_c.txt","w")
     for r in range(0,sq_ker):
