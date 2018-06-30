@@ -1,4 +1,5 @@
 # this is for float hardware verfification
+# only suport dim divided by four in hardware
 import numpy as np
 from scipy import signal as sg
 dim = 3; dep = 4; ker = 32
@@ -203,17 +204,16 @@ ker_l_3 = np.full(ker*dep*9,0,dtype='uint8').reshape((ker,dep,9))
 # print(ker_l_3[0,0,:]);print("________")
 f_k_3 = open("ker_3x3.txt","w")
 f_k_3_b = open("ker_3x3.bin","wb")
-for m in range(0,dim): # repet 3x3 kernel
-    for z in range(0,dep):
-        lis = ker_l_3[:,z,:]
-        for x in range(0,ker,8):
-            for a in range(0,8):
-                eig = lis[x+a,[7,8,3,4,5,0,1,2]] #reversed
-                f_k_3_b.write(bytearray(eig))
-                f_k_3.write(str(eig)[1:-1]+'\n')
-            nin = lis[x:x+8,6].flatten() #no reversed 6 means 
-            f_k_3_b.write(bytearray(nin))
-            f_k_3.write(str(nin)[1:-1]+'\n')
+for z in range(0,dep):
+    lis = ker_l_3[:,z,:]
+    for x in range(0,ker,8):
+        for a in range(0,8):
+            eig = lis[x+a,[7,8,3,4,5,0,1,2]] #reversed
+            f_k_3_b.write(bytearray(eig))
+            f_k_3.write(str(eig)[1:-1]+'\n')
+        nin = lis[x:x+8,6].flatten() #no reversed 6 means 
+        f_k_3_b.write(bytearray(nin))
+        f_k_3.write(str(nin)[1:-1]+'\n')
 ker_l_1 = b2dv(ker_l_1)
 ker_l_3 = b2dv(ker_l_3)
 print("expand kernel 1");print(ker_l_1[0,:])
@@ -486,7 +486,7 @@ for r in range(0,dim_sq):
 f_sq_out_1_c = open("sq_out_c.txt","w")
 for r in range(0,sq_ker):
     for d in range(0,dim_sq):
-        lis = sq_out[r,d,:]
+        lis = d2bv(sq_out[r,d,:])
         lisStr = ' '.join(map(str,list(lis)))
         f_sq_out_1_c.write(lisStr+'\n')
 ########################     avg pool
