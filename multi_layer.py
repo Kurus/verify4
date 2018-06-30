@@ -1,12 +1,15 @@
 # this is for float hardware verfification
+# support stride 2
 import numpy as np
 from scipy import signal as sg
-dim = 3; dep = 4; ker = 32
-dim = 3;dep = 3;ker=64
+dim = 12
 dim_p=dim + 2
-sq_ker = 16
-pool_en = 0
+dep = 64
+ker = 64
+sq_ker = 64
+pool_en = 1
 av_pool_en = 0
+stride2_en = 1
 random = 0 #TODO
 sq_rep = 0 # repete squze kernl for last layer
 
@@ -178,6 +181,8 @@ for d in range(0,dep):
             lis = in_ori[z,y,d].flatten().tolist()
             f_in_c.write(str(lis)[1:-1]+'\n')
             f_in_c_b.write(bytearray(lis))
+if stride2_en==1: #valid padding
+    in_l=in_ori
 in_l = b2dv(in_l)
 print("input layer");print(in_l[:,:,0]); 
 ########################        expand kernels 
