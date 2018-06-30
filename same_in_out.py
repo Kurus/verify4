@@ -265,14 +265,14 @@ for k in range(0,ker):
             for b in range(0,dim):
                 ll = in_l[a:a+3,b:b+3,l].flatten()
                 ll = np.multiply(kk,ll)
-                l1 = dq(ll[1]) + dq(ll[2])
-                l2 = dq(ll[3]) + dq(ll[4])
-                l3 = dq(ll[5]) + dq(ll[6])
-                l4 = dq(ll[7]) + dq(ll[8])
+                l1 = dq(ll[0]) + dq(ll[1])
+                l2 = dq(ll[5]) + dq(ll[4])
+                l3 = dq(ll[3]) + dq(ll[8])
+                l4 = dq(ll[7]) + dq(ll[6])
                 l1 = dq(l1) + dq(l2)
                 l2 = dq(l3) + dq(l4)
                 l1 = dq(l1) + dq(l2)
-                ll = dq(dq(l1) + dq(ll[0]) )
+                ll = dq(dq(l1) + dq(ll[2]) )
                 out_3[k,l,a,b]=ll
         # res = sg.convolve(in_l[:,:,l],kk , "valid").astype(float) # addre lus #################### change to 12bit
         # out_3[k,l,:,:]=res

@@ -2,17 +2,20 @@
 # support stride 2
 import numpy as np
 from scipy import signal as sg
+import os
+
 dim = 4
 dim_p=dim + 2
 dep = 4
-ker_list = [16,16]
+ker_list = [64,64]
 sq_ker_list = [16,16]
 pool_en_list = [0,0]
 av_pool_en_list = [0,0]
-stride2_en_list = [1,0]
+stride2_en_list = [0,0]
 sq_rep_list = [0,0] # repete squze kernl for last layer
 random = 0 #TODO
-num_layer = 1
+num_layer = 2
+
 
 final_out = []
 cwd = os.getcwd()
@@ -177,12 +180,13 @@ for cur_ly in range(0,num_layer):
         else:
             in_ori = np.random.randint(low = 0, high = 255, size = (dim,dim,dep), dtype='uint8')
     else:
-        in_ori = np.rollaxis(final_out,0,3)
+        in_ori = d2bv(np.rollaxis(final_out,0,3))
         dim,_,dep = in_ori.shape
         dim_p=dim + 2
 
     in_l = np.zeros(dim_p*dim_p*dep, dtype='uint8').reshape((dim_p,dim_p,dep))
     in_l[1:-1,1:-1,:] = in_ori
+    print("input layer");print(in_l[:,:,0]);
     f_in = open("input_layer.txt","w")
     f_in_b = open("input_layer.bin","wb")
     for z in range(0,dim):
@@ -190,8 +194,9 @@ for cur_ly in range(0,num_layer):
             for x in range(0,dim):
                 lis = in_l[z:z+3,x:x+3,y].flatten().tolist()
                 for rep in range(0,ker,4):
-                    f_in.write(str(lis)[1:-1]+'\n')# already in byte
+                    f_in.write(str(lis)[1:-1]+'\n')
                     f_in_b.write(bytearray(lis))
+
     in_ori_c = [] # for first layer in hardware it need to be mod 4
     dim_c = dim
     if cur_ly == 0:
@@ -221,7 +226,10 @@ for cur_ly in range(0,num_layer):
     # ker_l_1 = np.zeros(ker*dep, dtype='uint8').reshape((ker,dep))
     ker_l_1 = np.full(ker*dep,0,dtype='uint8').reshape((ker,dep))
     ker_l_1[0,0]=60
-    # ker_l_1 = np.random.randint(low = 0, high = 255, size = (ker*dep),dtype='uint8').reshape((ker,dep))
+    # ker_l_1 = np.random.randint(low = 0, high = 25	5, size = (ker*dep),dtype='uint8').reshape((ker,dep))
+    if stride2_en == 1:# for stride 2 exp 1 is zero
+        ker_l_1 = np.zeros(ker*dep, dtype='uint8').reshape((ker,dep))
+    print("kernel1");print(ker_l_1)
     f_k_1 = open("ker_1x1.txt","w")
     f_k_1_b = open("ker_1x1.bin","wb")
     for z in range(0,dep):
@@ -240,17 +248,18 @@ for cur_ly in range(0,num_layer):
     # print(ker_l_3[0,0,:]);print("________")
     f_k_3 = open("ker_3x3.txt","w")
     f_k_3_b = open("ker_3x3.bin","wb")
-    for m in range(0,dim): # repet 3x3 kernel
-        for z in range(0,dep):
-            lis = ker_l_3[:,z,:]
-            for x in range(0,ker,8):
-                for a in range(0,8):
-                    eig = lis[x+a,[7,8,3,4,5,0,1,2]] #reversed
-                    f_k_3_b.write(bytearray(eig))
-                    f_k_3.write(str(eig)[1:-1]+'\n')
-                nin = lis[x:x+8,6].flatten() #no reversed 6 means 
-                f_k_3_b.write(bytearray(nin))
-                f_k_3.write(str(nin)[1:-1]+'\n')
+    # for m in range(0,dim): # repet 3x3 kernel # removed repeating
+    # ordering 78 345 012 ## 6
+    for z in range(0,dep):
+        lis = ker_l_3[:,z,:]
+        for x in range(0,ker,8):
+            for a in range(0,8):
+                eig = lis[x+a,[7,8,3,4,5,0,1,2]] #reversed
+                f_k_3_b.write(bytearray(eig))
+                f_k_3.write(str(eig)[1:-1]+'\n')
+            nin = lis[x:x+8,6].flatten() #no reversed 6 means 
+            f_k_3_b.write(bytearray(nin))
+            f_k_3.write(str(nin)[1:-1]+'\n')
     ker_l_1 = b2dv(ker_l_1)
     ker_l_3 = b2dv(ker_l_3)
     print("expand kernel 1");print(ker_l_1[0,:])
@@ -258,6 +267,8 @@ for cur_ly in range(0,num_layer):
     ########################        exapnd bias
     bis_1 = np.full(ker,0x00,dtype='uint8') #one
     # bis_1 = np.random.randint(low = 0, high = 255, size = (ker),dtype='uint8')
+    if stride2_en == 1: # for stride 2 expand 1 is disabled
+        bis_1 = np.full(ker,0,dtype='uint8')
     bis_3 = np.full(ker,0x00,dtype='uint8')
     # bis_3 = np.random.randint(low = 0, high = 255, size = (ker),dtype='uint8')
     b_bis = open("bias.txt","w")
@@ -276,11 +287,13 @@ for cur_ly in range(0,num_layer):
     print("exp3 bias");print(bis_3)
     #######################        expand convolution
     out_1 = np.zeros(ker*dep*dim*dim, dtype='float64').reshape((ker,dep,dim,dim))
-    for k in range(0,ker):
-        for l in range(0,dep):
-            res = sg.convolve(in_l[:,:,l],[[ker_l_1[k,l]]] , "valid").astype(float)
-            out_1[k,l,:,:]=dqv(res[1:-1,1:-1])
-
+    #stride 2 means 3x3 conv only
+    if stride2_en==0:
+        for k in range(0,ker):
+            for l in range(0,dep):
+                res = sg.convolve(in_l[:,:,l],[[ker_l_1[k,l]]] , "valid").astype(float)
+                out_1[k,l,:,:]=dqv(res[1:-1,1:-1])
+    print("exp1 conv - no addition");print(out_1[0,0,:,:]);
     f_out_1 = open("out_1x1.txt","w")
     f_out_1_b = open("out_1x1.bin","wb")
     # out_1 = np.arange(ker*dep*dim*dim, dtype='uint8').reshape((ker,dep,dim,dim))
@@ -292,27 +305,41 @@ for cur_ly in range(0,num_layer):
                 f_out_1.write(str(lis)[1:-1]+'\n')
     print("exp1 add bf add")
     print(out_1[0,0,:,:])
-
-    out_3 = np.zeros(ker*dep*dim*dim, dtype='float64').reshape((ker,dep,dim,dim))
-    for k in range(0,ker):
-        for l in range(0,dep):
-            # kk = np.rot90(ker_l_3[k,l].reshape((3,3)),2)
-            kk = ker_l_3[k,l]
-            for a in range(0,dim):
-                for b in range(0,dim):
-                    ll = in_l[a:a+3,b:b+3,l].flatten()
-                    ll = np.multiply(kk,ll)
-                    l1 = dq(ll[1]) + dq(ll[2])
-                    l2 = dq(ll[3]) + dq(ll[4])
-                    l3 = dq(ll[5]) + dq(ll[6])
-                    l4 = dq(ll[7]) + dq(ll[8])
-                    l1 = dq(l1) + dq(l2)
-                    l2 = dq(l3) + dq(l4)
-                    l1 = dq(l1) + dq(l2)
-                    ll = dq(dq(l1) + dq(ll[0]) )
-                    out_3[k,l,a,b]=ll
-            # res = sg.convolve(in_l[:,:,l],kk , "valid").astype(float) # addre lus #################### change to 12bit
-            # out_3[k,l,:,:]=res
+    if stride2_en==0:
+        out_3 = np.zeros(ker*dep*dim*dim, dtype='float64').reshape((ker,dep,dim,dim))
+        for k in range(0,ker):
+            for l in range(0,dep):
+                # kk = np.rot90(ker_l_3[k,l].reshape((3,3)),2)
+                kk = ker_l_3[k,l]
+                for a in range(0,dim):
+                    for b in range(0,dim):
+                        ll = in_l[a:a+3,b:b+3,l].flatten()
+                        ll = np.multiply(kk,ll)
+                        l1 = dq(ll[0]) + dq(ll[1])
+                        l2 = dq(ll[5]) + dq(ll[4])
+                        l3 = dq(ll[3]) + dq(ll[8])
+                        l4 = dq(ll[7]) + dq(ll[6])
+                        l1 = dq(l1) + dq(l2)
+                        l2 = dq(l3) + dq(l4)
+                        l1 = dq(l1) + dq(l2)
+                        ll = dq(dq(l1) + dq(ll[2]) )
+                        out_3[k,l,a,b]=ll
+                # res = sg.convolve(in_l[:,:,l],kk , "valid").astype(float) # addre lus #################### change to 12bit
+                # out_3[k,l,:,:]=res
+    if stride2_en==1:
+        if dim%2==0:
+            o_dim = dim//2 - 1
+        else:
+            o_dim= dim //2
+        out_3 = np.zeros(ker*dep*o_dim*o_dim, dtype='float64').reshape((ker,dep,o_dim,o_dim))
+        for k in range(0,ker):
+            for l in range(0,dep):
+                kk = ker_l_3[k,l]
+                for a in range(0,dim-2,2):
+                    for b in range(0,dim-2,2):
+                        ll = in_l[a:a+3,b:b+3,l].flatten()
+                        out_3[k,l,a//2,b//2]=sum(np.multiply(kk,ll))
+        dim=o_dim
     print("exp3 out bef add")
     print(out_3[0,0,:,:])
     # out_3 = np.arange(ker*dep*dim*dim, dtype='uint8').reshape((ker,dep,dim,dim))
@@ -372,7 +399,15 @@ for cur_ly in range(0,num_layer):
             lis=d2bv(out_3[:,x,y])
             exp_out_3_b.write(bytearray(lis))
             exp_out_3.write(str(lis)[1:-1]+'\n')
+    print("exp1 after bias sinle pix")
+    print(out_1[:,0,0])
+    print("exp1 after bias single layer")
+    print(out_1[0,:,:])
 
+    print("exp3 after bias sinle pix")
+    print(out_3[:,0,0])
+    print("exp3 after bias single layer")
+    print(out_3[0,:,:])
     ############################# pooling
     dim_o = (dim - 1)//2
     # out_1 = np.arange(ker*dim*dim, dtype='float64').reshape((ker,dim,dim)) #test pool
@@ -424,11 +459,20 @@ for cur_ly in range(0,num_layer):
     ########################## squeeze
     sq_in=[] # dep*dim*dim
     dep = ker*2 # TODO firs layer no ned 2
+    if stride2_en==1:
+        dep = ker # firs layer no ned 2
+
     if pool_en == 1: # ########TODO add first layer heere
-        sq_in = np.concatenate((pool_1, pool_3), axis=0)
         dim_sq = dim_o
+        if stride2_en==1:
+            sq_in = pool_3
+        else:
+            sq_in = np.concatenate((pool_1, pool_3), axis=0)
     else:
-        sq_in = np.concatenate((out_1, out_3), axis=0)
+        if stride2_en==1:
+            sq_in=out_3
+        else:
+            sq_in = np.concatenate((out_1, out_3), axis=0)
         dim_sq = dim
 
     # print(out_1[31,:,:])
@@ -444,6 +488,11 @@ for cur_ly in range(0,num_layer):
         sq_ker_l[0,0]=60
     else:
         sq_ker_l = np.random.randint(low = 0, high = 255, size = (sq_ker,dep), dtype='uint8')
+    if stride2_en==1:
+        tmp = np.full(sq_ker*dep,0, dtype='uint8').reshape((sq_ker,dep))
+        sq_ker_l_write = np.append(sq_ker_l,tmp,axis=1)
+    else:
+        sq_ker_l_write = sq_ker_l
 
     sq_k_1 = open("sq_ker.txt","w")
     sq_k_1_b = open("sq_ker.bin","wb")
@@ -508,10 +557,9 @@ for cur_ly in range(0,num_layer):
     for i in range(0,sq_ker):
         sq_out[i,:,:] = sq_out[i,:,:] + sq_bis_1[i]
     sq_out[sq_out < 0] = 0 # no need for positive
-    # print(sq_out[:,0,0])
 
+    final_out = sq_out
     # sq_out = np.arange(sq_ker*dim_sq*dim_sq, dtype='uint8').reshape((sq_ker,dim_sq,dim_sq)) # test ouptu
-    # print(sq_out[0,:,:]);print('______')
     f_sq_out_1 = open("sq_out.txt","w")
     f_sq_out_1_b = open("sq_out.bin","wb")
     for r in range(0,dim_sq):
@@ -519,6 +567,13 @@ for cur_ly in range(0,num_layer):
             lis = d2bv(sq_out[d,r,:])
             f_sq_out_1_b.write(bytearray(lis))
             f_sq_out_1.write(str(lis)[1:-1]+'\n')
+
+    f_sq_out_1_c = open("sq_out_c.txt","w")
+    for r in range(0,sq_ker):
+        for d in range(0,dim_sq):
+            lis = sq_out[r,d,:]
+            lisStr = ' '.join(map(str,list(lis)))
+            f_sq_out_1_c.write(lisStr+'\n')
 
     ########################     avg pool
     sq_bis_1 = np.ones(sq_ker,dtype='uint8') # actual value for convoution
