@@ -1,9 +1,8 @@
 # this is for float hardware verfification
-# only support dimension is divided by 4 in hardware
 import numpy as np
 from scipy import signal as sg
 dim = 3; dep = 4; ker = 32
-dim = 3;dep = 3;ker=64
+dim = 16;dep = 16;ker=64
 dim_p=dim + 2
 sq_ker = 16
 pool_en = 0
@@ -159,6 +158,7 @@ if random == 0:
     # in_ori[:,:,1] = np.arange(dim*dim,dtype='uint8').reshape(dim,dim)
     # in_ori = np.random.randint(low = 0, high = 255, size = (dim*dim*dep),dtype='uint8').reshape((dim,dim,dep))
     # in_ori = np.full(dim*dim*dep,60,dtype='uint8').reshape((dim,dim,dep))
+    in_ori = np.random.randint(low = 0, high = 255, size = (dim,dim,dep), dtype='uint8')
 else:
     in_ori = np.random.randint(low = 0, high = 255, size = (dim,dim,dep), dtype='uint8')
 in_l[1:-1,1:-1,:] = in_ori
@@ -183,7 +183,7 @@ in_l = b2dv(in_l)
 print("input layer");print(in_l[:,:,0]); 
 ########################        expand kernels 
 # ker_l_1 = np.zeros(ker*dep, dtype='uint8').reshape((ker,dep))
-ker_l_1 = np.full(ker*dep,0,dtype='uint8').reshape((ker,dep))
+ker_l_1 = np.full(ker*dep,60,dtype='uint8').reshape((ker,dep))
 # ker_l_1 = np.random.randint(low = 0, high = 255, size = (ker*dep),dtype='uint8').reshape((ker,dep))
 f_k_1 = open("ker_1x1.txt","w")
 f_k_1_b = open("ker_1x1.bin","wb")
@@ -199,7 +199,6 @@ for z in range(0,dep):
 
 # ker_l_3 = np.arange(ker*dep*9, dtype='uint8').reshape((ker,dep,9))
 ker_l_3 = np.full(ker*dep*9,0,dtype='uint8').reshape((ker,dep,9))
-ker_l_3[0,0,4]=60
 # ker_l_3 = np.random.randint(low = 0, high = 255, size = (ker,dep,9),dtype='uint8').reshape((ker,dep,9))
 # print(ker_l_3[0,0,:]);print("________")
 f_k_3 = open("ker_3x3.txt","w")
@@ -265,14 +264,14 @@ for k in range(0,ker):
             for b in range(0,dim):
                 ll = in_l[a:a+3,b:b+3,l].flatten()
                 ll = np.multiply(kk,ll)
-                l1 = dq(ll[0]) + dq(ll[1])
-                l2 = dq(ll[5]) + dq(ll[4])
-                l3 = dq(ll[3]) + dq(ll[8])
-                l4 = dq(ll[7]) + dq(ll[6])
+                l1 = dq(ll[1]) + dq(ll[2])
+                l2 = dq(ll[3]) + dq(ll[4])
+                l3 = dq(ll[5]) + dq(ll[6])
+                l4 = dq(ll[7]) + dq(ll[8])
                 l1 = dq(l1) + dq(l2)
                 l2 = dq(l3) + dq(l4)
                 l1 = dq(l1) + dq(l2)
-                ll = dq(dq(l1) + dq(ll[2]) )
+                ll = dq(dq(l1) + dq(ll[0]) )
                 out_3[k,l,a,b]=ll
         # res = sg.convolve(in_l[:,:,l],kk , "valid").astype(float) # addre lus #################### change to 12bit
         # out_3[k,l,:,:]=res
@@ -324,7 +323,6 @@ for a in range(0,ker):# for exp kernel addition is sequential
                 ans = dq(ans + dq(out_3[a,i,b,c]))
             out_3_tmp[a,b,c]=ans
 out_3 = out_3_tmp
-print("after expan3 add");print(out_3[0,:,:])
 # out_3 = np.sum(out_3,1,dtype='float64') ############# change
 for i in range(0,ker):
     out_3[i,:,:] = dqv(dqv(out_3[i,:,:]) + dqv(bis_3[i]))
@@ -405,8 +403,7 @@ if random == 0:
     #sq_ker_l = np.full(sq_ker*dep,65,dtype='uint8').reshape((sq_ker,dep))
     # sq_ker_l = np.random.randint(low=0, high=255, size = (sq_ker*dep),dtype='uint8').reshape((sq_ker,dep))
     sq_ker_l = np.full(sq_ker*dep,0, dtype='uint8').reshape((sq_ker,dep))
-    # sq_ker_l[0,0]=60
-    sq_ker_l[0,dep//2]=60
+    sq_ker_l[0,0]=60
 else:
     sq_ker_l = np.random.randint(low = 0, high = 255, size = (sq_ker,dep), dtype='uint8')
 
@@ -451,15 +448,15 @@ for k in range(0,sq_ker):
         sq_out[k,l,:,:]=dqv(res)
 
 print("squ input before add")
-inkk=dep//2
+inkk=0
 print("layer " + str(inkk))
 print(sq_in[inkk,:,:])
 print("kernel")
 print(sq_ker_l[0,inkk])
 print("output ")
 print(sq_out[0,inkk,:,:])
-# print("single pixe")
-# print(sq_out[0,:,0,0])
+print("single pixe")
+print(sq_out[0,:,0,0])
 
 squ_out_tmp = np.zeros((sq_ker,dim_sq,dim_sq), dtype='float64')
 for a in range(0,sq_ker):

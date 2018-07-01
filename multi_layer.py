@@ -4,17 +4,17 @@ import numpy as np
 from scipy import signal as sg
 import os
 
-dim = 4
+dim = 220
 dim_p=dim + 2
-dep = 4
-ker_list = [64,64]
-sq_ker_list = [16,16]
-pool_en_list = [0,0]
-av_pool_en_list = [0,0]
-stride2_en_list = [0,0]
-sq_rep_list = [0,0] # repete squze kernl for last layer
+dep = 3
+ker_list = [64,64, 64, 128, 128, 192, 192, 256, 256]
+sq_ker_list = [16,16, 32, 32, 48, 48, 64, 64, 1000]
+pool_en_list = [1,0, 1, 0, 1, 0, 0, 0, 0]
+av_pool_en_list = [0,0,0,0, 0, 0, 0, 0, 1]
+stride2_en_list = [1,0,0,0, 0, 0, 0, 0, 0]
+sq_rep_list = [0,0,0,0, 0, 0, 0, 0, 0] # repete squze kernl for last layer
 random = 0 #TODO
-num_layer = 2
+num_layer = 9
 
 
 final_out = []
@@ -173,9 +173,10 @@ for cur_ly in range(0,num_layer):
     if cur_ly == 0:
         #######################         Input image
         if random == 0:
-            in_ori = np.full(dim*dim*dep, 0, dtype='uint8').reshape((dim,dim,dep))
-            in_ori[:,:,0] = np.arange(dim*dim, dtype = 'uint8').reshape(dim,dim)
-            in_ori = np.arange(dim*dim*dep, dtype='uint8').reshape((dim,dim,dep))
+            # in_ori = np.full(dim*dim*dep, 0, dtype='uint8').reshape((dim,dim,dep))
+            # in_ori[:,:,0] = np.arange(dim*dim, dtype = 'uint8').reshape(dim,dim)
+            # in_ori = np.arange(dim*dim*dep, dtype='uint8').reshape((dim,dim,dep))
+            in_ori = np.random.randint(low = 0, high = 255, size = (dim,dim,dep), dtype='uint8')
         else:
             in_ori = np.random.randint(low = 0, high = 255, size = (dim,dim,dep), dtype='uint8')
     else:
@@ -223,9 +224,9 @@ for cur_ly in range(0,num_layer):
     print("input layer");print(in_l[:,:,0]); 
     ########################        expand kernels 
     # ker_l_1 = np.zeros(ker*dep, dtype='uint8').reshape((ker,dep))
-    ker_l_1 = np.full(ker*dep,0,dtype='uint8').reshape((ker,dep))
-    ker_l_1[0,0]=60
-    # ker_l_1 = np.random.randint(low = 0, high = 25	5, size = (ker*dep),dtype='uint8').reshape((ker,dep))
+    # ker_l_1 = np.full(ker*dep,0,dtype='uint8').reshape((ker,dep))
+    # ker_l_1[0,0]=60
+    ker_l_1 = np.random.randint(low = 0, high = 255, size = (ker*dep),dtype='uint8').reshape((ker,dep))
     if stride2_en == 1:# for stride 2 exp 1 is zero
         ker_l_1 = np.zeros(ker*dep, dtype='uint8').reshape((ker,dep))
     print("kernel1");print(ker_l_1)
@@ -242,8 +243,8 @@ for cur_ly in range(0,num_layer):
         # f_k_1.write(str(lis)[1:-1]+'\n')
 
     # ker_l_3 = np.arange(ker*dep*9, dtype='uint8').reshape((ker,dep,9))
-    ker_l_3 = np.full(ker*dep*9,0,dtype='uint8').reshape((ker,dep,9))
-    # ker_l_3 = np.random.randint(low = 0, high = 255, size = (ker,dep,9),dtype='uint8').reshape((ker,dep,9))
+    # ker_l_3 = np.full(ker*dep*9,0,dtype='uint8').reshape((ker,dep,9))
+    ker_l_3 = np.random.randint(low = 0, high = 255, size = (ker,dep,9),dtype='uint8').reshape((ker,dep,9))
     # print(ker_l_3[0,0,:]);print("________")
     # f_k_3 = open("ker_3x3.txt","w")
     f_k_3_b = open("ker_3x3"+"_"+str(cur_ly)+".bin","wb")
@@ -287,7 +288,7 @@ for cur_ly in range(0,num_layer):
     #######################        expand convolution
     out_1 = np.zeros(ker*dep*dim*dim, dtype='float64').reshape((ker,dep,dim,dim))
     #stride 2 means 3x3 conv only
-    if stride2_en==0:
+    if stride2_en==0:##for stride enable this will be zero. for stride 2 we should move 2
         for k in range(0,ker):
             for l in range(0,dep):
                 res = sg.convolve(in_l[:,:,l],[[ker_l_1[k,l]]] , "valid").astype(float)
@@ -304,7 +305,7 @@ for cur_ly in range(0,num_layer):
     #             f_out_1.write(str(lis)[1:-1]+'\n')
     print("exp1 add bf add")
     print(out_1[0,0,:,:])
-    if stride2_en==0:
+    if stride2_en==0: 
         out_3 = np.zeros(ker*dep*dim*dim, dtype='float64').reshape((ker,dep,dim,dim))
         for k in range(0,ker):
             for l in range(0,dep):
@@ -313,7 +314,7 @@ for cur_ly in range(0,num_layer):
                 for a in range(0,dim):
                     for b in range(0,dim):
                         ll = in_l[a:a+3,b:b+3,l].flatten()
-                        ll = np.multiply(kk,ll)
+                        ll = dqv(np.multiply(kk,ll))
                         l1 = dq(ll[0]) + dq(ll[1])
                         l2 = dq(ll[5]) + dq(ll[4])
                         l3 = dq(ll[3]) + dq(ll[8])
@@ -337,7 +338,16 @@ for cur_ly in range(0,num_layer):
                 for a in range(0,dim-2,2):
                     for b in range(0,dim-2,2):
                         ll = in_l[a:a+3,b:b+3,l].flatten()
-                        out_3[k,l,a//2,b//2]=sum(np.multiply(kk,ll))
+                        ll = dqv(np.multiply(kk,ll))
+                        l1 = dq(ll[0]) + dq(ll[1])
+                        l2 = dq(ll[5]) + dq(ll[4])
+                        l3 = dq(ll[3]) + dq(ll[8])
+                        l4 = dq(ll[7]) + dq(ll[6])
+                        l1 = dq(l1) + dq(l2)
+                        l2 = dq(l3) + dq(l4)
+                        l1 = dq(l1) + dq(l2)
+                        ll = dq(dq(l1) + dq(ll[2]) )
+                        out_3[k,l,a//2,b//2]=ll
         dim=o_dim
     print("exp3 out bef add")
     print(out_3[0,0,:,:])
@@ -483,8 +493,9 @@ for cur_ly in range(0,num_layer):
     if random == 0:
         #sq_ker_l = np.full(sq_ker*dep,65,dtype='uint8').reshape((sq_ker,dep))
         # sq_ker_l = np.random.randint(low=0, high=255, size = (sq_ker*dep),dtype='uint8').reshape((sq_ker,dep))
-        sq_ker_l = np.full(sq_ker*dep,0, dtype='uint8').reshape((sq_ker,dep))
-        sq_ker_l[0,0]=60
+        # sq_ker_l = np.full(sq_ker*dep,0, dtype='uint8').reshape((sq_ker,dep))
+        # sq_ker_l[0,0]=60
+        sq_ker_l = np.random.randint(low = 0, high = 255, size = (sq_ker,dep), dtype='uint8')
     else:
         sq_ker_l = np.random.randint(low = 0, high = 255, size = (sq_ker,dep), dtype='uint8')
     if stride2_en==1:
@@ -514,8 +525,8 @@ for cur_ly in range(0,num_layer):
     sq_ker_l = b2dv(sq_ker_l) #########converting to float
     print("sqeeze kernel");print(sq_ker_l[0,:])
     # #######################    squ bias
-    sq_bis_1 = np.full(sq_ker,0x00,dtype='uint8')
-    # sq_bis_1 = np.random.randint(low = 0, high = 255, size = (sq_ker),dtype='uint8')
+    # sq_bis_1 = np.full(sq_ker,0x00,dtype='uint8')
+    sq_bis_1 = np.random.randint(low = 0, high = 255, size = (sq_ker),dtype='uint8')
     # print(sq_bis_1)
     # f_sq_bis = open("sq_bias.txt","w")
     f_sq_bis_b = open("sq_bias"+"_"+str(cur_ly)+".bin","wb")
