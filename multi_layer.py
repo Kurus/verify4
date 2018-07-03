@@ -14,7 +14,7 @@ av_pool_en_list = [0,1,0,0, 0, 0, 0, 0, 1]
 stride2_en_list = [1,0,0,0, 0, 0, 0, 0, 0]
 sq_rep_list = [0,0,0,0, 0, 0, 0, 0, 0] # repete squze kernl for last layer
 random = 0 #TODO
-num_layer = 2
+num_layer = 1
 
 
 final_out = []
@@ -75,7 +75,7 @@ def d2b(x):
     if e>31:
         e = 31
     bits = sgn>>56 | e<<2 | man>> 50# 64-8,2,52-2
-    return np.uint8(bits)
+    return np.int8(bits)
 d2bv = np.vectorize(d2b)
 
 def b2d(x):
@@ -130,33 +130,30 @@ b2dv = np.vectorize(b2d)
 
 def add(x):
     np.set_printoptions(linewidth=np.inf)
-    assert(x.size%128 == 0)
-    prt = np.split(x,x.size//128)
+    sz = x.size
+    assert(sz%128 == 0)
     ans = []
-    for i in prt:
-        ii = i
+    for a in range(0,sz//128):
+        i = a*64
+        ii = np.append(x[i:i+64],x[sz//2+i:sz//2+i+64])
         assert(ii.size==128)
-        # print(ii)
         for n in range(0,3):#64-64 to 8-8 (1x1-3x3)
             t=[]
             for a in range(0,len(ii),2):
                 t.append(dq(ii[a])+dq(ii[a+1]))
             ii = np.array(t)
         assert(ii.size==16)
-        # print(ii)
         t=[]
         for a in range(0,8):
             t.append(dq(ii[a])+dq(ii[a+8]))
         ii=np.array(t)
         assert(ii.size==8)
-        # print(ii)
         for n in range(0,3):
             t=[]
             for a in range(0,len(ii),2):
                 t.append(dq(ii[a])+dq(ii[a+1]))
             ii = np.array(t)
         assert(ii.size==1)
-        # print(ii)
         ans.append(ii[0])
     res = 0
     for a in ans:
@@ -173,10 +170,10 @@ for cur_ly in range(0,num_layer):
     if cur_ly == 0:
         #######################         Input image
         if random == 0:
-            in_ori = np.full(dim*dim*dep, 0, dtype='uint8').reshape((dim,dim,dep))
-            in_ori[:,:,0] = np.arange(dim*dim, dtype = 'uint8').reshape(dim,dim)
+            # in_ori = np.full(dim*dim*dep, 0, dtype='uint8').reshape((dim,dim,dep))
+            # in_ori[:,:,0] = np.arange(dim*dim, dtype = 'uint8').reshape(dim,dim)
             # in_ori = np.arange(dim*dim*dep, dtype='uint8').reshape((dim,dim,dep))
-            # in_ori = np.random.randint(low = 0, high = 255, size = (dim,dim,dep), dtype='uint8')
+            in_ori = np.random.randint(low = 0, high = 255, size = (dim,dim,dep), dtype='uint8')
         else:
             in_ori = np.random.randint(low = 0, high = 255, size = (dim,dim,dep), dtype='uint8')
     else:
@@ -541,7 +538,7 @@ for cur_ly in range(0,num_layer):
             sq_out[k,l,:,:]=dqv(res)
 
     print("squ input before add")
-    inkk=0
+    inkk=dep//2
     print("layer " + str(inkk))
     print(sq_in[inkk,:,:])
     print("kernel")
@@ -557,6 +554,9 @@ for cur_ly in range(0,num_layer):
             for c in range(0,dim_sq):
                 squ_out_tmp[a,b,c]=add(sq_out[a,:,b,c])
     sq_out = squ_out_tmp
+    print("after addition")
+    print(sq_out[0,:,:])
+    # print(sq_out[:,0,0])
     # print(sq_bis_1)
     for i in range(0,sq_ker):
         sq_out[i,:,:] = sq_out[i,:,:] + sq_bis_1[i]
