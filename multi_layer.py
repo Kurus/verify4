@@ -4,14 +4,14 @@ import numpy as np
 from scipy import signal as sg
 import os
 
-dim = 25
+dim = 5
 dim_p=dim + 2
 dep = 3
 ker_list = [64,64, 64, 128, 128, 192, 192, 256, 256]
 sq_ker_list = [16,16, 32, 32, 48, 48, 64, 64, 1000]
-pool_en_list = [1,0, 1, 0, 1, 0, 0, 0, 0]
-av_pool_en_list = [0,1,0,0, 0, 0, 0, 0, 1]
-stride2_en_list = [1,0,0,0, 0, 0, 0, 0, 0]
+pool_en_list = [0,0, 0, 0, 1, 0, 0, 0, 0]
+av_pool_en_list = [0,0,0,0, 0, 0, 0, 0, 1]
+stride2_en_list = [0,0,0,0, 0, 0, 0, 0, 0]
 sq_rep_list = [0,0,0,0, 0, 0, 0, 0, 0] # repete squze kernl for last layer
 random = 0 #TODO
 num_layer = 1
@@ -170,10 +170,10 @@ for cur_ly in range(0,num_layer):
     if cur_ly == 0:
         #######################         Input image
         if random == 0:
-            # in_ori = np.full(dim*dim*dep, 0, dtype='uint8').reshape((dim,dim,dep))
-            # in_ori[:,:,0] = np.arange(dim*dim, dtype = 'uint8').reshape(dim,dim)
+            in_ori = np.full(dim*dim*dep, 0, dtype='uint8').reshape((dim,dim,dep))
+            in_ori[:,:,0] = np.arange(dim*dim, dtype = 'uint8').reshape(dim,dim)
             # in_ori = np.arange(dim*dim*dep, dtype='uint8').reshape((dim,dim,dep))
-            in_ori = np.random.randint(low = 0, high = 255, size = (dim,dim,dep), dtype='uint8')
+            # in_ori = np.random.randint(low = 0, high = 255, size = (dim,dim,dep), dtype='uint8')
         else:
             in_ori = np.random.randint(low = 0, high = 255, size = (dim,dim,dep), dtype='uint8')
     else:
@@ -218,15 +218,16 @@ for cur_ly in range(0,num_layer):
                     lis = in_ori_c[z,y,d].flatten().tolist()
                     # f_in_c.write(str(lis)[1:-1]+'\n')
                     f_in_c_b.write(bytearray(lis))
+        f_in_c_b.close()
     if stride2_en==1: # valid padding
         in_l=in_ori
     in_l = b2dv(in_l)
     print("input layer");print(in_l[:,:,0]); 
     ########################        expand kernels 
     # ker_l_1 = np.zeros(ker*dep, dtype='uint8').reshape((ker,dep))
-    ker_l_1 = np.full(ker*dep,60,dtype='uint8').reshape((ker,dep))
+    ker_l_1 = np.full(ker*dep,0,dtype='uint8').reshape((ker,dep))
     ker_l_1[0,0]=60
-    ker_l_1 = np.random.randint(low = 0, high = 255, size = (ker*dep),dtype='uint8').reshape((ker,dep))
+    # ker_l_1 = np.random.randint(low = 0, high = 255, size = (ker*dep),dtype='uint8').reshape((ker,dep))
     if stride2_en == 1:# for stride 2 exp 1 is zero
         ker_l_1 = np.zeros(ker*dep, dtype='uint8').reshape((ker,dep))
     print("kernel1");print(ker_l_1)
@@ -241,10 +242,10 @@ for cur_ly in range(0,num_layer):
             lis = ker_l_1[x+4:x+8,z][::-1]
             f_k_1_b.write(bytearray(lis))
         # f_k_1.write(str(lis)[1:-1]+'\n')
-
+    f_k_1_b.close()
     # ker_l_3 = np.arange(ker*dep*9, dtype='uint8').reshape((ker,dep,9))
     ker_l_3 = np.full(ker*dep*9,0,dtype='uint8').reshape((ker,dep,9))
-    ker_l_3[0,0,4]=60
+    # ker_l_3[0,0,4]=60
     # ker_l_3 = np.random.randint(low = 0, high = 255, size = (ker,dep,9),dtype='uint8').reshape((ker,dep,9))
     # print(ker_l_3[0,0,:]);print("________")
     # f_k_3 = open("ker_3x3.txt","w")
@@ -261,6 +262,7 @@ for cur_ly in range(0,num_layer):
             nin = lis[x:x+8,6].flatten() #no reversed 6 means 
             f_k_3_b.write(bytearray(nin))
             # f_k_3.write(str(nin)[1:-1]+'\n')
+    f_k_3_b.close()
     ker_l_1 = b2dv(ker_l_1)
     ker_l_3 = b2dv(ker_l_3)
     print("expand kernel 1");print(ker_l_1[0,:])
@@ -281,6 +283,7 @@ for cur_ly in range(0,num_layer):
         # b_bis.write(str(lis_b3)[1:-1]+'\n')
         b_bis_b.write(bytearray(lis_b1))
         b_bis_b.write(bytearray(lis_b3))
+    b_bis_b.close()
     bis_1 = b2dv(bis_1) ######### convert to float
     # print(sum(bis_1))
     bis_3 = b2dv(bis_3)
@@ -490,9 +493,9 @@ for cur_ly in range(0,num_layer):
     ########################   squ kernel
     if random == 0:
         #sq_ker_l = np.full(sq_ker*dep,65,dtype='uint8').reshape((sq_ker,dep))
-        sq_ker_l = np.random.randint(low=0, high=255, size = (sq_ker*dep),dtype='uint8').reshape((sq_ker,dep))
-        # sq_ker_l = np.full(sq_ker*dep,60, dtype='uint8').reshape((sq_ker,dep))
-        # sq_ker_l[0,0]=60
+        # sq_ker_l = np.random.randint(low=0, high=255, size = (sq_ker*dep),dtype='uint8').reshape((sq_ker,dep))
+        sq_ker_l = np.full(sq_ker*dep,0, dtype='uint8').reshape((sq_ker,dep))
+        sq_ker_l[0,0]=60
         # sq_ker_l = np.random.randint(low = 0, high = 255, size = (sq_ker,dep), dtype='uint8')
     else:
         sq_ker_l = np.random.randint(low = 0, high = 255, size = (sq_ker,dep), dtype='uint8')
@@ -514,12 +517,12 @@ for cur_ly in range(0,num_layer):
                 lis = sq_ker_l[x,z:z+8][::-1] #reverse added
                 # sq_k_1.write(str(lis)[1:-1]+'\n')
                 sq_k_1_b.write(bytearray(lis))
-        
+    sq_k_1_b.close()
     sq_ker_l = b2dv(sq_ker_l) #########converting to float
     print("sqeeze kernel");print(sq_ker_l[0,:])
     # #######################    squ bias
-    # sq_bis_1 = np.full(sq_ker,0x00,dtype='uint8')
-    sq_bis_1 = np.random.randint(low = 0, high = 255, size = (sq_ker),dtype='uint8')
+    sq_bis_1 = np.full(sq_ker,0x00,dtype='uint8')
+    # sq_bis_1 = np.random.randint(low = 0, high = 255, size = (sq_ker),dtype='uint8')
     # print(sq_bis_1)
     # f_sq_bis = open("sq_bias.txt","w")
     f_sq_bis_b = open("sq_bias"+"_"+str(cur_ly)+".bin","wb")
@@ -528,7 +531,7 @@ for cur_ly in range(0,num_layer):
         # lis = lis[::-1] #reverse
         # f_sq_bis.write(str(lis)[1:-1]+'\n')
         f_sq_bis_b.write(bytearray(lis))
-
+    f_sq_bis_b.close()
     sq_bis_1 = b2dv(sq_bis_1)# converting to float
     # ######################    squ convoluve
     sq_out = np.zeros((sq_ker,dep,dim_sq,dim_sq), dtype='float64')
@@ -580,7 +583,7 @@ for cur_ly in range(0,num_layer):
             lis = d2bv(sq_out[r,d,:])
             lisStr = ' '.join(map(str,list(lis)))
             f_sq_out_1_c.write(lisStr+'\n')
-
+    f_sq_out_1_c.close()
     ########################     avg pool
     if av_pool_en == 1:
         sum_rw = np.zeros(sq_ker, dtype='float64')
