@@ -170,9 +170,9 @@ for cur_ly in range(0,num_layer):
     if cur_ly == 0:
         #######################         Input image
         if random == 0:
-            in_ori = np.full(dim*dim*dep, 0, dtype='uint8').reshape((dim,dim,dep))
-            in_ori[:,:,0] = np.arange(dim*dim, dtype = 'uint8').reshape(dim,dim)
-            # in_ori = np.arange(dim*dim*dep, dtype='uint8').reshape((dim,dim,dep))
+            # in_ori = np.full(dim*dim*dep, 0, dtype='uint8').reshape((dim,dim,dep))
+            # in_ori[:,:,0] = np.arange(dim*dim, dtype = 'uint8').reshape(dim,dim)
+            in_ori = np.arange(dim*dim*dep, dtype='uint8').reshape((dim,dim,dep))
             # in_ori = np.random.randint(low = 0, high = 255, size = (dim,dim,dep), dtype='uint8')
         else:
             in_ori = np.random.randint(low = 0, high = 255, size = (dim,dim,dep), dtype='uint8')
@@ -225,7 +225,7 @@ for cur_ly in range(0,num_layer):
     print("input layer");print(in_l[:,:,0]); 
     ########################        expand kernels 
     # ker_l_1 = np.zeros(ker*dep, dtype='uint8').reshape((ker,dep))
-    ker_l_1 = np.full(ker*dep,0,dtype='uint8').reshape((ker,dep))
+    ker_l_1 = np.full(ker*dep,60,dtype='uint8').reshape((ker,dep))
     ker_l_1[0,0]=60
     # ker_l_1 = np.random.randint(low = 0, high = 255, size = (ker*dep),dtype='uint8').reshape((ker,dep))
     if stride2_en == 1:# for stride 2 exp 1 is zero
